@@ -142,7 +142,7 @@ export default function Header() {
                     Giriş Yap
                   </Button>
                 </Link>
-                <Link href="/giris">
+                <Link href="/giris?tab=register">
                   <Button size="sm" className="gap-2 gradient-primary text-white border-0">
                     Kayıt Ol
                   </Button>
@@ -208,7 +208,7 @@ export default function Header() {
                         Giriş Yap
                       </Button>
                     </Link>
-                    <Link href="/giris" onClick={() => setIsOpen(false)}>
+                    <Link href="/giris?tab=register" onClick={() => setIsOpen(false)}>
                       <Button className="w-full justify-start gap-2 gradient-primary text-white border-0">
                         Kayıt Ol
                       </Button>
