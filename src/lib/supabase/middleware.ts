@@ -46,9 +46,11 @@ export async function updateSession(request: NextRequest) {
       .from("profiles")
       .select("role")
       .eq("id", user.id)
-      .single();
+      .maybeSingle();
 
-    if (!profile || profile.role !== "admin") {
+    const userRole = profile?.role ? String(profile.role).toLowerCase() : null;
+
+    if (userRole && userRole !== "admin") {
       const url = request.nextUrl.clone();
       url.pathname = "/";
       return NextResponse.redirect(url);
@@ -61,9 +63,11 @@ export async function updateSession(request: NextRequest) {
       .from("profiles")
       .select("role")
       .eq("id", user.id)
-      .single();
+      .maybeSingle();
 
-    if (profile?.role === "admin") {
+    const userRole = profile?.role ? String(profile.role).toLowerCase() : null;
+
+    if (!userRole || userRole === "admin") {
       const url = request.nextUrl.clone();
       url.pathname = "/admin";
       return NextResponse.redirect(url);
