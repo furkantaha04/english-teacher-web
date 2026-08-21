@@ -11,6 +11,7 @@ import {
   ClipboardCheck,
   Home,
   LogOut,
+  LayoutDashboard,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -31,10 +32,40 @@ export default function Header() {
       const supabase = createClient();
       
       const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user || null);
+      const currentUser = session?.user;
+      
+      if (currentUser) {
+        // Fetch role to know if we should show Admin Panel link
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", currentUser.id)
+          .maybeSingle();
+          
+        setUser({
+          ...currentUser,
+          role: profile?.role || (currentUser.email?.includes("admin") ? "admin" : "student")
+        });
+      } else {
+        setUser(null);
+      }
 
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-        setUser(session?.user || null);
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        const currentUser = session?.user;
+        if (currentUser) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", currentUser.id)
+            .maybeSingle();
+            
+          setUser({
+            ...currentUser,
+            role: profile?.role || (currentUser.email?.includes("admin") ? "admin" : "student")
+          });
+        } else {
+          setUser(null);
+        }
       });
 
       return () => subscription.unsubscribe();
@@ -85,15 +116,25 @@ export default function Header() {
           ))}
           <div className="ml-3 pl-3 border-l border-border flex items-center gap-2">
             {user ? (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20"
-                onClick={handleLogout}
-              >
-                <LogOut className="w-4 h-4" />
-                Çıkış Yap
-              </Button>
+              <>
+                {user.role === "admin" && (
+                  <Link href="/admin">
+                    <Button variant="outline" size="sm" className="gap-2 text-primary border-primary/20 hover:bg-primary/10">
+                      <LayoutDashboard className="w-4 h-4" />
+                      Admin Panel
+                    </Button>
+                  </Link>
+                )}
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="w-4 h-4" />
+                  Çıkış
+                </Button>
+              </>
             ) : (
               <>
                 <Link href="/giris">
@@ -139,14 +180,27 @@ export default function Header() {
               
               <div className="pt-4 border-t border-border flex flex-col gap-2">
                 {user ? (
-                  <Button 
-                    variant="outline" 
-                    className="w-full gap-2 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20 justify-start"
-                    onClick={handleLogout}
-                  >
-                    <LogOut className="w-4 h-4" />
-                    Çıkış Yap
-                  </Button>
+                  <>
+                    {user.role === "admin" && (
+                      <Link href="/admin" onClick={() => setIsOpen(false)}>
+                        <Button 
+                          variant="outline" 
+                          className="w-full gap-2 text-primary hover:text-primary hover:bg-primary/10 border-primary/20 justify-start"
+                        >
+                          <LayoutDashboard className="w-4 h-4" />
+                          Admin Panel
+                        </Button>
+                      </Link>
+                    )}
+                    <Button 
+                      variant="outline" 
+                      className="w-full gap-2 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20 justify-start"
+                      onClick={handleLogout}
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Çıkış Yap
+                    </Button>
+                  </>
                 ) : (
                   <>
                     <Link href="/giris" onClick={() => setIsOpen(false)}>

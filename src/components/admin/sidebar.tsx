@@ -12,6 +12,7 @@ import {
   LogOut,
   GraduationCap,
   Menu,
+  Home,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
@@ -49,7 +50,7 @@ export default function AdminSidebar() {
       const { createClient } = await import("@/lib/supabase/client");
       const supabase = createClient();
       await supabase.auth.signOut();
-      router.push("/giris");
+      router.push("/");
       router.refresh();
     } catch (error) {
       console.error("Logout error:", error);
@@ -97,8 +98,17 @@ export default function AdminSidebar() {
         })}
       </nav>
 
-      {/* Logout */}
-      <div className="p-3 border-t border-border">
+      {/* Bottom Actions */}
+      <div className="p-3 border-t border-border space-y-1">
+        <Link href="/" onClick={() => setIsOpen(false)}>
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground mb-1"
+          >
+            <Home className="w-4 h-4" />
+            Ana Sayfaya Dön
+          </Button>
+        </Link>
         <Button
           variant="ghost"
           onClick={handleLogout}
