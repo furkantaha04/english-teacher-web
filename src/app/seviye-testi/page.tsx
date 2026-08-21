@@ -1,0 +1,431 @@
+"use client";
+
+import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  ClipboardCheck,
+  ArrowRight,
+  ArrowLeft,
+  CheckCircle2,
+  XCircle,
+  Trophy,
+  Loader2,
+  BarChart3,
+} from "lucide-react";
+import { toast } from "sonner";
+import type { QuizQuestion } from "@/types";
+
+const quizQuestions: QuizQuestion[] = [
+  {
+    id: 1,
+    question: 'She ___ to school every day.',
+    options: ["go", "goes", "going", "gone"],
+    correctAnswer: 1,
+    level: "A1",
+  },
+  {
+    id: 2,
+    question: 'They ___ watching TV when I arrived.',
+    options: ["was", "were", "are", "is"],
+    correctAnswer: 1,
+    level: "A1",
+  },
+  {
+    id: 3,
+    question: "I have never ___ to Paris.",
+    options: ["be", "was", "been", "being"],
+    correctAnswer: 2,
+    level: "A2",
+  },
+  {
+    id: 4,
+    question: 'If I ___ you, I would apologize.',
+    options: ["am", "was", "were", "be"],
+    correctAnswer: 2,
+    level: "B1",
+  },
+  {
+    id: 5,
+    question: "She asked me where I ___.",
+    options: ["live", "lived", "living", "lives"],
+    correctAnswer: 1,
+    level: "B1",
+  },
+  {
+    id: 6,
+    question: 'By the time he arrived, we ___ already left.',
+    options: ["have", "has", "had", "having"],
+    correctAnswer: 2,
+    level: "B2",
+  },
+  {
+    id: 7,
+    question: "The report ___ by the committee last week.",
+    options: [
+      "was reviewed",
+      "reviewed",
+      "has reviewed",
+      "is reviewing",
+    ],
+    correctAnswer: 0,
+    level: "B2",
+  },
+  {
+    id: 8,
+    question: '___ having studied for weeks, he still felt unprepared.',
+    options: ["Despite", "Although", "However", "Nevertheless"],
+    correctAnswer: 0,
+    level: "B2",
+  },
+  {
+    id: 9,
+    question: "Not until the evidence ___ presented did the jury change its mind.",
+    options: ["was", "were", "is", "has been"],
+    correctAnswer: 0,
+    level: "C1",
+  },
+  {
+    id: 10,
+    question:
+      "The phenomenon ___ to a complex interplay of socioeconomic factors.",
+    options: [
+      "can be attributed",
+      "can attribute",
+      "attributing",
+      "has attributing",
+    ],
+    correctAnswer: 0,
+    level: "C1",
+  },
+];
+
+function estimateLevel(score: number, total: number): string {
+  const percentage = (score / total) * 100;
+  if (percentage >= 90) return "C1";
+  if (percentage >= 70) return "B2";
+  if (percentage >= 50) return "B1";
+  if (percentage >= 30) return "A2";
+  return "A1";
+}
+
+type Step = "info" | "quiz" | "result";
+
+export default function SeviyeTestiPage() {
+  const [step, setStep] = useState<Step>("info");
+  const [contactInfo, setContactInfo] = useState({
+    name: "",
+    email: "",
+    phone: "",
+  });
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [answers, setAnswers] = useState<number[]>([]);
+  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [showAnswer, setShowAnswer] = useState(false);
+  const [score, setScore] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleStartQuiz = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!contactInfo.name || !contactInfo.email) {
+      toast.error("Lütfen ad ve e-posta alanlarını doldurun.");
+      return;
+    }
+    setStep("quiz");
+  };
+
+  const handleSelectAnswer = (index: number) => {
+    if (showAnswer) return;
+    setSelectedAnswer(index);
+    setShowAnswer(true);
+
+    const isCorrect = index === quizQuestions[currentQuestion].correctAnswer;
+    if (isCorrect) {
+      setScore((prev) => prev + 1);
+    }
+    setAnswers((prev) => [...prev, index]);
+  };
+
+  const handleNextQuestion = async () => {
+    if (currentQuestion < quizQuestions.length - 1) {
+      setCurrentQuestion((prev) => prev + 1);
+      setSelectedAnswer(null);
+      setShowAnswer(false);
+    } else {
+      // Quiz finished - submit results
+      setIsSubmitting(true);
+      const finalScore = score;
+      const level = estimateLevel(finalScore, quizQuestions.length);
+
+      try {
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        await supabase.from("quiz_results").insert({
+          name: contactInfo.name,
+          email: contactInfo.email,
+          phone: contactInfo.phone || null,
+          score: finalScore,
+          total_questions: quizQuestions.length,
+          estimated_level: level,
+        });
+      } catch (error) {
+        console.error("Failed to save quiz result:", error);
+      }
+
+      setIsSubmitting(false);
+      setStep("result");
+    }
+  };
+
+  const estimatedLevel = estimateLevel(score, quizQuestions.length);
+
+  // Step 1: Contact Info
+  if (step === "info") {
+    return (
+      <div className="section-padding">
+        <div className="container-main max-w-lg">
+          <div className="text-center mb-10">
+            <Badge variant="secondary" className="mb-3 px-3 py-1">
+              <ClipboardCheck className="w-3.5 h-3.5 mr-1.5" />
+              Ücretsiz
+            </Badge>
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
+              Seviye Tespit Testi
+            </h1>
+            <p className="text-muted-foreground mt-3">
+              10 soruluk mini testimizle İngilizce seviyenizi öğrenin
+            </p>
+          </div>
+
+          <Card className="border-0 shadow-lg shadow-primary/5">
+            <CardContent className="p-6 sm:p-8">
+              <form onSubmit={handleStartQuiz} className="space-y-5">
+                <div className="space-y-2">
+                  <Label htmlFor="quiz-name">Adınız *</Label>
+                  <Input
+                    id="quiz-name"
+                    value={contactInfo.name}
+                    onChange={(e) =>
+                      setContactInfo((prev) => ({
+                        ...prev,
+                        name: e.target.value,
+                      }))
+                    }
+                    placeholder="Adınız Soyadınız"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="quiz-email">E-posta *</Label>
+                  <Input
+                    id="quiz-email"
+                    type="email"
+                    value={contactInfo.email}
+                    onChange={(e) =>
+                      setContactInfo((prev) => ({
+                        ...prev,
+                        email: e.target.value,
+                      }))
+                    }
+                    placeholder="ornek@email.com"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="quiz-phone">Telefon (Opsiyonel)</Label>
+                  <Input
+                    id="quiz-phone"
+                    type="tel"
+                    value={contactInfo.phone}
+                    onChange={(e) =>
+                      setContactInfo((prev) => ({
+                        ...prev,
+                        phone: e.target.value,
+                      }))
+                    }
+                    placeholder="05XX XXX XX XX"
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="w-full gap-2 gradient-primary border-0 text-white hover:opacity-90"
+                >
+                  Teste Başla
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Step 2: Quiz Questions
+  if (step === "quiz") {
+    const question = quizQuestions[currentQuestion];
+    return (
+      <div className="section-padding">
+        <div className="container-main max-w-2xl">
+          {/* Progress */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-muted-foreground">
+                Soru {currentQuestion + 1} / {quizQuestions.length}
+              </span>
+              <Badge variant="outline">{question.level}</Badge>
+            </div>
+            <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full gradient-primary rounded-full transition-all duration-500"
+                style={{
+                  width: `${((currentQuestion + 1) / quizQuestions.length) * 100}%`,
+                }}
+              />
+            </div>
+          </div>
+
+          <Card className="border-0 shadow-lg shadow-primary/5">
+            <CardContent className="p-6 sm:p-8">
+              <h2 className="text-xl font-semibold mb-6">{question.question}</h2>
+
+              <div className="space-y-3">
+                {question.options.map((option, index) => {
+                  let buttonClass =
+                    "w-full text-left justify-start h-auto py-3 px-4 text-sm ";
+                  if (showAnswer) {
+                    if (index === question.correctAnswer) {
+                      buttonClass +=
+                        "border-green-500 bg-green-50 text-green-700 hover:bg-green-50";
+                    } else if (
+                      index === selectedAnswer &&
+                      index !== question.correctAnswer
+                    ) {
+                      buttonClass +=
+                        "border-red-500 bg-red-50 text-red-700 hover:bg-red-50";
+                    }
+                  } else if (selectedAnswer === index) {
+                    buttonClass += "border-primary bg-primary/5";
+                  }
+
+                  return (
+                    <Button
+                      key={index}
+                      variant="outline"
+                      className={buttonClass}
+                      onClick={() => handleSelectAnswer(index)}
+                      disabled={showAnswer}
+                    >
+                      <span className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs font-semibold mr-3 shrink-0">
+                        {String.fromCharCode(65 + index)}
+                      </span>
+                      {option}
+                      {showAnswer && index === question.correctAnswer && (
+                        <CheckCircle2 className="w-5 h-5 text-green-500 ml-auto" />
+                      )}
+                      {showAnswer &&
+                        index === selectedAnswer &&
+                        index !== question.correctAnswer && (
+                          <XCircle className="w-5 h-5 text-red-500 ml-auto" />
+                        )}
+                    </Button>
+                  );
+                })}
+              </div>
+
+              {showAnswer && (
+                <div className="mt-6 flex justify-end">
+                  <Button
+                    onClick={handleNextQuestion}
+                    disabled={isSubmitting}
+                    className="gap-2 gradient-primary border-0 text-white hover:opacity-90"
+                  >
+                    {isSubmitting ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : currentQuestion < quizQuestions.length - 1 ? (
+                      <>
+                        Sonraki Soru
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    ) : (
+                      <>
+                        Sonuçları Gör
+                        <BarChart3 className="w-4 h-4" />
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Step 3: Results
+  return (
+    <div className="section-padding">
+      <div className="container-main max-w-lg">
+        <Card className="border-0 shadow-lg shadow-primary/5 text-center overflow-hidden">
+          <div className="h-2 gradient-primary" />
+          <CardContent className="p-8 sm:p-12">
+            <div className="w-20 h-20 rounded-full gradient-primary flex items-center justify-center mx-auto mb-6">
+              <Trophy className="w-10 h-10 text-white" />
+            </div>
+
+            <h2 className="text-2xl font-bold mb-2">Test Tamamlandı!</h2>
+            <p className="text-muted-foreground mb-6">
+              {contactInfo.name}, işte sonuçlarınız:
+            </p>
+
+            <div className="bg-muted/50 rounded-2xl p-6 mb-6">
+              <div className="text-4xl font-extrabold text-gradient mb-1">
+                {score} / {quizQuestions.length}
+              </div>
+              <p className="text-sm text-muted-foreground">Doğru Cevap</p>
+            </div>
+
+            <div className="mb-8">
+              <p className="text-sm text-muted-foreground mb-2">
+                Tahmini Seviyeniz
+              </p>
+              <Badge className="text-lg px-4 py-2 gradient-primary border-0 text-white">
+                {estimatedLevel}
+              </Badge>
+            </div>
+
+            <div className="space-y-3">
+              <a 
+                href="#iletisim"
+                className={buttonVariants({ size: "lg", className: "w-full gap-2 gradient-primary border-0 text-white hover:opacity-90" })}
+              >
+                Ücretsiz Ön Görüşme Al
+                <ArrowRight className="w-4 h-4" />
+              </a>
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full"
+                onClick={() => {
+                  setStep("info");
+                  setCurrentQuestion(0);
+                  setAnswers([]);
+                  setSelectedAnswer(null);
+                  setShowAnswer(false);
+                  setScore(0);
+                }}
+              >
+                Testi Tekrarla
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
