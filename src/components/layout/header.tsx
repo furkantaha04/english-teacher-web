@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
@@ -10,7 +10,9 @@ import {
   Menu,
   ClipboardCheck,
   Home,
+  LogOut,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const navLinks = [
   { href: "/", label: "Ana Sayfa", icon: Home },
@@ -20,6 +22,35 @@ const navLinks = [
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user || null);
+
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        setUser(session?.user || null);
+      });
+
+      return () => subscription.unsubscribe();
+    };
+    
+    fetchUser();
+  }, []);
+
+  const handleLogout = async () => {
+    const { createClient } = await import("@/lib/supabase/client");
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    setIsOpen(false);
+    router.push("/");
+    router.refresh();
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-lg">
@@ -52,12 +83,31 @@ export default function Header() {
               </Button>
             </Link>
           ))}
-          <div className="ml-3 pl-3 border-l border-border">
-            <Link href="/giris">
-              <Button variant="outline" size="sm" className="gap-2">
-                Öğretmen Girişi
+          <div className="ml-3 pl-3 border-l border-border flex items-center gap-2">
+            {user ? (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20"
+                onClick={handleLogout}
+              >
+                <LogOut className="w-4 h-4" />
+                Çıkış Yap
               </Button>
-            </Link>
+            ) : (
+              <>
+                <Link href="/giris">
+                  <Button variant="outline" size="sm" className="gap-2">
+                    Giriş Yap
+                  </Button>
+                </Link>
+                <Link href="/giris">
+                  <Button size="sm" className="gap-2 gradient-primary text-white border-0">
+                    Kayıt Ol
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </nav>
 
@@ -74,6 +124,7 @@ export default function Header() {
                 </div>
                 <span className="text-base font-bold">English Academy</span>
               </div>
+              
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
@@ -85,12 +136,31 @@ export default function Header() {
                   <span className="font-medium">{link.label}</span>
                 </Link>
               ))}
-              <div className="pt-4 border-t border-border">
-                <Link href="/giris" onClick={() => setIsOpen(false)}>
-                  <Button className="w-full gap-2">
-                    Öğretmen Girişi
+              
+              <div className="pt-4 border-t border-border flex flex-col gap-2">
+                {user ? (
+                  <Button 
+                    variant="outline" 
+                    className="w-full gap-2 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20 justify-start"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Çıkış Yap
                   </Button>
-                </Link>
+                ) : (
+                  <>
+                    <Link href="/giris" onClick={() => setIsOpen(false)}>
+                      <Button variant="outline" className="w-full justify-start gap-2">
+                        Giriş Yap
+                      </Button>
+                    </Link>
+                    <Link href="/giris" onClick={() => setIsOpen(false)}>
+                      <Button className="w-full justify-start gap-2 gradient-primary text-white border-0">
+                        Kayıt Ol
+                      </Button>
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </SheetContent>
