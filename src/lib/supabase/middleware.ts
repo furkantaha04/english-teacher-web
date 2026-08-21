@@ -59,6 +59,7 @@ export async function updateSession(request: NextRequest) {
 
   // Redirect logged-in users away from auth pages
   const isAuthRoute = request.nextUrl.pathname === "/giris" || 
+                      request.nextUrl.pathname === "/kayit-ol" ||
                       request.nextUrl.pathname === "/sifre-sifirla" || 
                       request.nextUrl.pathname === "/sifre-yenile";
 
