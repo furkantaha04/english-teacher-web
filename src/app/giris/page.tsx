@@ -48,9 +48,11 @@ export default function GirisPage() {
         .from("profiles")
         .select("role")
         .eq("id", data.user.id)
-        .single();
+        .maybeSingle();
 
-      if (!profile || profile.role !== "admin") {
+      const userRole = profile?.role ? String(profile.role).toLowerCase() : null;
+
+      if (userRole && userRole !== "admin") {
         await supabase.auth.signOut();
         setError("Bu sayfaya erişim yetkiniz bulunmamaktadır.");
         return;
