@@ -100,3 +100,39 @@ export const loginSchema = z.object({
 });
 
 export type LoginValues = z.infer<typeof loginSchema>;
+
+// ==========================================
+// Kayıt Validasyonu
+// ==========================================
+export const registerSchema = z.object({
+  email: z.string().email("Geçerli bir e-posta adresi girin"),
+  password: z.string().min(6, "Şifre en az 6 karakter olmalıdır"),
+  confirmPassword: z.string()
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Şifreler eşleşmiyor",
+  path: ["confirmPassword"],
+});
+
+export type RegisterValues = z.infer<typeof registerSchema>;
+
+// ==========================================
+// Şifre Sıfırlama Validasyonu
+// ==========================================
+export const resetPasswordSchema = z.object({
+  email: z.string().email("Geçerli bir e-posta adresi girin"),
+});
+
+export type ResetPasswordValues = z.infer<typeof resetPasswordSchema>;
+
+// ==========================================
+// Şifre Yenileme Validasyonu
+// ==========================================
+export const updatePasswordSchema = z.object({
+  password: z.string().min(6, "Şifre en az 6 karakter olmalıdır"),
+  confirmPassword: z.string()
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Şifreler eşleşmiyor",
+  path: ["confirmPassword"],
+});
+
+export type UpdatePasswordValues = z.infer<typeof updatePasswordSchema>;

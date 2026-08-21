@@ -57,8 +57,12 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  // Redirect logged-in admin away from login page
-  if (request.nextUrl.pathname === "/giris" && user) {
+  // Redirect logged-in users away from auth pages
+  const isAuthRoute = request.nextUrl.pathname === "/giris" || 
+                      request.nextUrl.pathname === "/sifre-sifirla" || 
+                      request.nextUrl.pathname === "/sifre-yenile";
+
+  if (isAuthRoute && user) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
@@ -67,11 +71,15 @@ export async function updateSession(request: NextRequest) {
 
     const userRole = profile?.role ? String(profile.role).toLowerCase() : null;
 
-    if (!userRole || userRole === "admin") {
-      const url = request.nextUrl.clone();
+    const url = request.nextUrl.clone();
+    
+    if (!userRole || userRole === "admin" || user.email?.includes("admin")) {
       url.pathname = "/admin";
-      return NextResponse.redirect(url);
+    } else {
+      url.pathname = "/";
     }
+    
+    return NextResponse.redirect(url);
   }
 
   return supabaseResponse;
