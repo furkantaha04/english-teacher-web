@@ -61,7 +61,7 @@ export interface QuizQuestion {
   question: string;
   options: string[];
   correctAnswer: number;
-  level: "A1" | "A2" | "B1" | "B2" | "C1";
+  level: "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
 }
 
 export interface PlacementQuestion {
@@ -69,7 +69,7 @@ export interface PlacementQuestion {
   question_text: string;
   options: string[];
   correct_option: number;
-  level: "A1" | "A2" | "B1" | "B2" | "C1";
+  level: "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
   created_at: string;
 }
 

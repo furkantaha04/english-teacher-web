@@ -21,9 +21,10 @@ import type { PlacementQuestion } from "@/types";
 function estimateLevel(score: number, total: number): string {
   if (total === 0) return "A1";
   const percentage = (score / total) * 100;
-  if (percentage >= 90) return "C1";
-  if (percentage >= 70) return "B2";
-  if (percentage >= 50) return "B1";
+  if (percentage >= 90) return "C2";
+  if (percentage >= 75) return "C1";
+  if (percentage >= 60) return "B2";
+  if (percentage >= 45) return "B1";
   if (percentage >= 30) return "A2";
   return "A1";
 }
@@ -57,12 +58,36 @@ export default function SeviyeTestiPage() {
         const supabase = createClient();
         const { data, error } = await supabase
           .from("placement_questions")
-          .select("*")
-          .order("level", { ascending: true })
-          .order("created_at", { ascending: false });
+          .select("*");
 
         if (error) throw error;
-        setQuizQuestions(data || []);
+        
+        const allQuestions = data || [];
+        
+        // Helper to shuffle arrays
+        const shuffleArray = <T,>(array: T[]): T[] => {
+          const newArr = [...array];
+          for (let i = newArr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+          }
+          return newArr;
+        };
+
+        // Select up to 5 questions per level randomly
+        const levels = ["A1", "A2", "B1", "B2", "C1", "C2"];
+        let selectedQuestions: PlacementQuestion[] = [];
+        
+        for (const level of levels) {
+          const questionsOfLevel = allQuestions.filter(q => q.level === level);
+          const shuffledLevel = shuffleArray(questionsOfLevel);
+          selectedQuestions = [...selectedQuestions, ...shuffledLevel.slice(0, 5)];
+        }
+        
+        // Shuffle the final merged array so questions are mixed in difficulty
+        selectedQuestions = shuffleArray(selectedQuestions);
+
+        setQuizQuestions(selectedQuestions);
       } catch (error) {
         console.error("Failed to load questions:", error);
         toast.error("Sorular yüklenemedi. Lütfen sayfayı yenileyin.");
@@ -236,7 +261,6 @@ export default function SeviyeTestiPage() {
               <span className="text-sm font-medium text-muted-foreground">
                 Soru {currentQuestion + 1} / {quizQuestions.length}
               </span>
-              <Badge variant="outline">{question.level}</Badge>
             </div>
             <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
               <div

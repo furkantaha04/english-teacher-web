@@ -46,7 +46,7 @@ export default function PlacementQuestionsAdmin() {
     question_text: string;
     options: string[];
     correct_option: number;
-    level: "A1" | "A2" | "B1" | "B2" | "C1";
+    level: "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
   }>({
     question_text: "",
     options: ["", "", "", ""],
@@ -276,7 +276,7 @@ export default function PlacementQuestionsAdmin() {
                 <Select
                   value={formData.level}
                   onValueChange={(val) =>
-                    setFormData({ ...formData, level: val as "A1" | "A2" | "B1" | "B2" | "C1" })
+                    setFormData({ ...formData, level: val as "A1" | "A2" | "B1" | "B2" | "C1" | "C2" })
                   }
                 >
                   <SelectTrigger id="level">
@@ -288,6 +288,7 @@ export default function PlacementQuestionsAdmin() {
                     <SelectItem value="B1">B1</SelectItem>
                     <SelectItem value="B2">B2</SelectItem>
                     <SelectItem value="C1">C1</SelectItem>
+                    <SelectItem value="C2">C2</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
