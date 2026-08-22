@@ -64,6 +64,15 @@ export interface QuizQuestion {
   level: "A1" | "A2" | "B1" | "B2" | "C1";
 }
 
+export interface PlacementQuestion {
+  id: number;
+  question_text: string;
+  options: string[];
+  correct_option: number;
+  level: "A1" | "A2" | "B1" | "B2" | "C1";
+  created_at: string;
+}
+
 // ==========================================
 // Form Types
 // ==========================================

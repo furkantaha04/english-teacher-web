@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import {
   ClipboardCheck,
   ArrowRight,
-  ArrowLeft,
   CheckCircle2,
   XCircle,
   Trophy,
@@ -17,93 +16,10 @@ import {
   BarChart3,
 } from "lucide-react";
 import { toast } from "sonner";
-import type { QuizQuestion } from "@/types";
-
-const quizQuestions: QuizQuestion[] = [
-  {
-    id: 1,
-    question: 'She ___ to school every day.',
-    options: ["go", "goes", "going", "gone"],
-    correctAnswer: 1,
-    level: "A1",
-  },
-  {
-    id: 2,
-    question: 'They ___ watching TV when I arrived.',
-    options: ["was", "were", "are", "is"],
-    correctAnswer: 1,
-    level: "A1",
-  },
-  {
-    id: 3,
-    question: "I have never ___ to Paris.",
-    options: ["be", "was", "been", "being"],
-    correctAnswer: 2,
-    level: "A2",
-  },
-  {
-    id: 4,
-    question: 'If I ___ you, I would apologize.',
-    options: ["am", "was", "were", "be"],
-    correctAnswer: 2,
-    level: "B1",
-  },
-  {
-    id: 5,
-    question: "She asked me where I ___.",
-    options: ["live", "lived", "living", "lives"],
-    correctAnswer: 1,
-    level: "B1",
-  },
-  {
-    id: 6,
-    question: 'By the time he arrived, we ___ already left.',
-    options: ["have", "has", "had", "having"],
-    correctAnswer: 2,
-    level: "B2",
-  },
-  {
-    id: 7,
-    question: "The report ___ by the committee last week.",
-    options: [
-      "was reviewed",
-      "reviewed",
-      "has reviewed",
-      "is reviewing",
-    ],
-    correctAnswer: 0,
-    level: "B2",
-  },
-  {
-    id: 8,
-    question: '___ having studied for weeks, he still felt unprepared.',
-    options: ["Despite", "Although", "However", "Nevertheless"],
-    correctAnswer: 0,
-    level: "B2",
-  },
-  {
-    id: 9,
-    question: "Not until the evidence ___ presented did the jury change its mind.",
-    options: ["was", "were", "is", "has been"],
-    correctAnswer: 0,
-    level: "C1",
-  },
-  {
-    id: 10,
-    question:
-      "The phenomenon ___ to a complex interplay of socioeconomic factors.",
-    options: [
-      "can be attributed",
-      "can attribute",
-      "attributing",
-      "has attributing",
-    ],
-    correctAnswer: 0,
-    level: "C1",
-  },
-];
+import type { PlacementQuestion } from "@/types";
 
 function estimateLevel(score: number, total: number): string {
+  if (total === 0) return "A1";
   const percentage = (score / total) * 100;
   if (percentage >= 90) return "C1";
   if (percentage >= 70) return "B2";
@@ -121,6 +37,12 @@ export default function SeviyeTestiPage() {
     email: "",
     phone: "",
   });
+  
+  // Questions State
+  const [quizQuestions, setQuizQuestions] = useState<PlacementQuestion[]>([]);
+  const [isLoadingQuestions, setIsLoadingQuestions] = useState(true);
+
+  // Quiz State
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -128,10 +50,37 @@ export default function SeviyeTestiPage() {
   const [score, setScore] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  useEffect(() => {
+    async function fetchQuestions() {
+      try {
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from("placement_questions")
+          .select("*")
+          .order("level", { ascending: true })
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+        setQuizQuestions(data || []);
+      } catch (error) {
+        console.error("Failed to load questions:", error);
+        toast.error("Sorular yüklenemedi. Lütfen sayfayı yenileyin.");
+      } finally {
+        setIsLoadingQuestions(false);
+      }
+    }
+    fetchQuestions();
+  }, []);
+
   const handleStartQuiz = (e: React.FormEvent) => {
     e.preventDefault();
     if (!contactInfo.name || !contactInfo.email) {
       toast.error("Lütfen ad ve e-posta alanlarını doldurun.");
+      return;
+    }
+    if (quizQuestions.length === 0) {
+      toast.error("Sınav için soru bulunamadı. Lütfen daha sonra tekrar deneyin.");
       return;
     }
     setStep("quiz");
@@ -142,7 +91,7 @@ export default function SeviyeTestiPage() {
     setSelectedAnswer(index);
     setShowAnswer(true);
 
-    const isCorrect = index === quizQuestions[currentQuestion].correctAnswer;
+    const isCorrect = index === quizQuestions[currentQuestion].correct_option;
     if (isCorrect) {
       setScore((prev) => prev + 1);
     }
@@ -196,7 +145,7 @@ export default function SeviyeTestiPage() {
               Seviye Tespit Testi
             </h1>
             <p className="text-muted-foreground mt-3">
-              10 soruluk mini testimizle İngilizce seviyenizi öğrenin
+              Kısa testimizle İngilizce seviyenizi öğrenin
             </p>
           </div>
 
@@ -252,10 +201,20 @@ export default function SeviyeTestiPage() {
                 <Button
                   type="submit"
                   size="lg"
+                  disabled={isLoadingQuestions}
                   className="w-full gap-2 gradient-primary border-0 text-white hover:opacity-90"
                 >
-                  Teste Başla
-                  <ArrowRight className="w-4 h-4" />
+                  {isLoadingQuestions ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Sorular Yükleniyor...
+                    </>
+                  ) : (
+                    <>
+                      Teste Başla
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
                 </Button>
               </form>
             </CardContent>
@@ -291,19 +250,19 @@ export default function SeviyeTestiPage() {
 
           <Card className="border-0 shadow-lg shadow-primary/5">
             <CardContent className="p-6 sm:p-8">
-              <h2 className="text-xl font-semibold mb-6">{question.question}</h2>
+              <h2 className="text-xl font-semibold mb-6">{question.question_text}</h2>
 
               <div className="space-y-3">
                 {question.options.map((option, index) => {
                   let buttonClass =
                     "w-full text-left justify-start h-auto py-3 px-4 text-sm ";
                   if (showAnswer) {
-                    if (index === question.correctAnswer) {
+                    if (index === question.correct_option) {
                       buttonClass +=
                         "border-green-500 bg-green-50 text-green-700 hover:bg-green-50";
                     } else if (
                       index === selectedAnswer &&
-                      index !== question.correctAnswer
+                      index !== question.correct_option
                     ) {
                       buttonClass +=
                         "border-red-500 bg-red-50 text-red-700 hover:bg-red-50";
@@ -324,12 +283,12 @@ export default function SeviyeTestiPage() {
                         {String.fromCharCode(65 + index)}
                       </span>
                       {option}
-                      {showAnswer && index === question.correctAnswer && (
+                      {showAnswer && index === question.correct_option && (
                         <CheckCircle2 className="w-5 h-5 text-green-500 ml-auto" />
                       )}
                       {showAnswer &&
                         index === selectedAnswer &&
-                        index !== question.correctAnswer && (
+                        index !== question.correct_option && (
                           <XCircle className="w-5 h-5 text-red-500 ml-auto" />
                         )}
                     </Button>

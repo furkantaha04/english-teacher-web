@@ -13,6 +13,7 @@ import {
   GraduationCap,
   Menu,
   Home,
+  ClipboardCheck,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
@@ -37,6 +38,11 @@ const sidebarLinks = [
     href: "/admin/gunun-kelimesi",
     label: "Günün Kelimesi",
     icon: BookMarked,
+  },
+  {
+    href: "/admin/seviye-tespit",
+    label: "Seviye Tespit",
+    icon: ClipboardCheck,
   },
 ];
 
