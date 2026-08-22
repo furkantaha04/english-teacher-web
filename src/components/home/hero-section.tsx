@@ -11,6 +11,7 @@ import {
   Star,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function HeroSection() {
   return (
@@ -94,14 +95,14 @@ export default function HeroSection() {
           <div className="flex-1 flex justify-center animate-slide-up delay-200">
             <div className="relative">
               {/* Main card */}
-              <div className="w-80 h-96 lg:w-96 lg:h-[440px] rounded-3xl gradient-primary shadow-2xl shadow-primary/20 flex items-end justify-center overflow-hidden">
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-8 text-center">
-                  <GraduationCap className="w-20 h-20 mb-6 opacity-90" />
-                  <h2 className="text-2xl font-bold mb-2">English Academy</h2>
-                  <p className="text-white/80 text-sm">
-                    Hedeflerinize ulaşmanız için yanınızdayız
-                  </p>
-                </div>
+              <div className="w-80 h-96 lg:w-96 lg:h-[440px] rounded-3xl shadow-2xl shadow-primary/20 flex items-center justify-center overflow-hidden relative">
+                <Image 
+                  src="/hero-image.jpg" 
+                  alt="English Academy" 
+                  fill 
+                  className="object-cover" 
+                  priority
+                />
               </div>
 
               {/* Floating cards */}
