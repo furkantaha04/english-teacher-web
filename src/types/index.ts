@@ -40,6 +40,7 @@ export interface DailyWord {
   pronunciation: string | null;
   meaning: string;
   example_sentence: string | null;
+  level?: string;
   created_at: string;
 }
 

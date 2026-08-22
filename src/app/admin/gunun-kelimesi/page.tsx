@@ -16,6 +16,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   BookMarked,
   Plus,
   Loader2,
@@ -33,6 +40,7 @@ export default function AdminGununKelimesiPage() {
   const [pronunciation, setPronunciation] = useState("");
   const [meaning, setMeaning] = useState("");
   const [exampleSentence, setExampleSentence] = useState("");
+  const [level, setLevel] = useState("A1");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -62,6 +70,7 @@ export default function AdminGununKelimesiPage() {
       pronunciation,
       meaning,
       example_sentence: exampleSentence,
+      level,
     });
 
     if (!validation.success) {
@@ -80,6 +89,7 @@ export default function AdminGununKelimesiPage() {
         pronunciation: pronunciation || null,
         meaning,
         example_sentence: exampleSentence || null,
+        level: level || "A1",
       });
 
       if (error) throw error;
@@ -89,6 +99,7 @@ export default function AdminGununKelimesiPage() {
       setPronunciation("");
       setMeaning("");
       setExampleSentence("");
+      setLevel("A1");
       fetchWords();
     } catch (error) {
       console.error("Insert error:", error);
@@ -163,6 +174,22 @@ export default function AdminGununKelimesiPage() {
               />
             </div>
             <div className="space-y-2">
+              <Label>Seviye</Label>
+              <Select value={level} onValueChange={(val) => setLevel(val || "A1")}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seviye seçin" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="A1">A1 - Başlangıç</SelectItem>
+                  <SelectItem value="A2">A2 - Temel</SelectItem>
+                  <SelectItem value="B1">B1 - Orta</SelectItem>
+                  <SelectItem value="B2">B2 - Orta Üstü</SelectItem>
+                  <SelectItem value="C1">C1 - İleri</SelectItem>
+                  <SelectItem value="C2">C2 - Yetkin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="dw-example">Örnek Cümle</Label>
               <Textarea
                 id="dw-example"
@@ -205,6 +232,7 @@ export default function AdminGununKelimesiPage() {
                 <TableHead>Kelime</TableHead>
                 <TableHead>Okunuş</TableHead>
                 <TableHead>Anlam</TableHead>
+                <TableHead>Seviye</TableHead>
                 <TableHead>Tarih</TableHead>
                 <TableHead className="text-right">İşlem</TableHead>
               </TableRow>
@@ -222,6 +250,13 @@ export default function AdminGununKelimesiPage() {
                     )}
                   </TableCell>
                   <TableCell>{w.meaning}</TableCell>
+                  <TableCell>
+                    {w.level ? (
+                      <Badge variant="outline">{w.level}</Badge>
+                    ) : (
+                      "-"
+                    )}
+                  </TableCell>
                   <TableCell className="text-muted-foreground text-sm">
                     {new Date(w.created_at).toLocaleDateString("tr-TR")}
                   </TableCell>
@@ -239,7 +274,7 @@ export default function AdminGununKelimesiPage() {
               ))}
               {words.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-12">
+                  <TableCell colSpan={6} className="text-center py-12">
                     <BookMarked className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
                     <p className="text-muted-foreground">
                       Henüz kelime eklenmemiş

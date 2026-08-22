@@ -87,6 +87,10 @@ export const dailyWordSchema = z.object({
     .max(500, "Örnek cümle en fazla 500 karakter olabilir")
     .optional()
     .or(z.literal("")),
+  level: z
+    .string()
+    .optional()
+    .or(z.literal("")),
 });
 
 export type DailyWordValues = z.infer<typeof dailyWordSchema>;
