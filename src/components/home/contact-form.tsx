@@ -62,7 +62,6 @@ export default function ContactForm() {
     setIsSubmitting(true);
 
     try {
-      // Try to insert into Supabase
       const { createClient } = await import("@/lib/supabase/client");
       const supabase = createClient();
 
@@ -82,11 +81,9 @@ export default function ContactForm() {
         description: "En kısa sürede size dönüş yapılacaktır.",
       });
     } catch (error) {
-      // If Supabase is not connected, show success anyway for demo
       console.error("Supabase error:", error);
-      setIsSubmitted(true);
-      toast.success("Mesajınız alındı!", {
-        description: "Demo modunda çalışıyorsunuz. Supabase bağlantısını kontrol edin.",
+      toast.error("Mesaj gönderilemedi", {
+        description: "Lütfen daha sonra tekrar deneyiniz.",
       });
     } finally {
       setIsSubmitting(false);

@@ -28,39 +28,15 @@ import {
   Eye,
   Calendar,
   User,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { ContactMessage } from "@/types";
 
-const fallbackMessages: ContactMessage[] = [
-  {
-    id: "1",
-    name: "Ahmet",
-    surname: "Yılmaz",
-    email: "ahmet@example.com",
-    phone: "05321234567",
-    level: "B1",
-    message: "Merhaba, YDS hazırlık dersleri hakkında bilgi almak istiyorum. Hafta sonları ders alabilir miyim?",
-    is_read: false,
-    is_replied: false,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: "2",
-    name: "Selin",
-    surname: "Kaya",
-    email: "selin@example.com",
-    phone: "05559876543",
-    level: "A2",
-    message: "Speaking derslerine başlamak istiyorum. Online ders imkanınız var mı?",
-    is_read: true,
-    is_replied: false,
-    created_at: new Date(Date.now() - 86400000).toISOString(),
-  },
-];
+// Fallback messages removed.
 
 export default function AdminMesajlarPage() {
-  const [messages, setMessages] = useState<ContactMessage[]>(fallbackMessages);
+  const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -130,12 +106,27 @@ export default function AdminMesajlarPage() {
       toast.success(!currentState ? "Cevaplandı olarak işaretlendi" : "İşaret kaldırıldı");
     } catch (error) {
       console.error("Failed to toggle replied:", error);
-      // Update locally anyway for demo
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === messageId ? { ...m, is_replied: !currentState } : m
-        )
-      );
+      toast.error("Bir hata oluştu");
+    }
+  };
+
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!confirm("Bu mesajı silmek istediğinize emin misiniz?")) return;
+    try {
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+      const { error } = await supabase.from("contact_messages").delete().eq("id", messageId);
+      if (error) throw error;
+
+      setMessages((prev) => prev.filter((m) => m.id !== messageId));
+      if (selectedMessage?.id === messageId) {
+        setDialogOpen(false);
+        setSelectedMessage(null);
+      }
+      toast.success("Mesaj başarıyla silindi");
+    } catch (error) {
+      console.error("Failed to delete message:", error);
+      toast.error("Mesaj silinirken bir hata oluştu");
     }
   };
 
@@ -333,6 +324,15 @@ export default function AdminMesajlarPage() {
                   {selectedMessage.is_replied
                     ? "Cevaplandı ✓"
                     : "Cevaplandı İşaretle"}
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="gap-2 flex-1"
+                  onClick={() => handleDeleteMessage(selectedMessage.id)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Sil
                 </Button>
               </div>
             </div>
