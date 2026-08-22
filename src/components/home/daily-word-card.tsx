@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Volume2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { BookOpen, Volume2, Heart } from "lucide-react";
+import { toast } from "sonner";
 import type { DailyWord } from "@/types";
 
 // Fallback data when Supabase is not connected
@@ -20,6 +22,133 @@ const fallbackWord: DailyWord = {
 export default function DailyWordCard() {
   const [word, setWord] = useState<DailyWord>(fallbackWord);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [savingInProgress, setSavingInProgress] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function init() {
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+
+      // Check auth
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session?.user) {
+        setUserId(session.user.id);
+      }
+
+      // Fetch latest daily word
+      const { data } = await supabase
+        .from("daily_words")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (data) {
+        setWord(data);
+      }
+    }
+    init();
+  }, []);
+
+  // Check if the current word is already saved
+  useEffect(() => {
+    async function checkSaved() {
+      if (!userId || !word) return;
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("user_saved_words")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("word", word.word)
+        .maybeSingle();
+      setIsSaved(!!data);
+    }
+    checkSaved();
+  }, [userId, word]);
+
+  const handleToggleSave = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card flip
+
+    if (!userId) {
+      toast.info("Kelimeleri kaydetmek için giriş yapmalısınız", {
+        action: {
+          label: "Giriş Yap",
+          onClick: () => (window.location.href = "/giris"),
+        },
+      });
+      return;
+    }
+
+    if (savingInProgress) return;
+    setSavingInProgress(true);
+
+    try {
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+
+      if (isSaved) {
+        // Remove from saved
+        const { error } = await supabase
+          .from("user_saved_words")
+          .delete()
+          .eq("user_id", userId)
+          .eq("word", word.word);
+        if (error) throw error;
+        setIsSaved(false);
+        toast.success("Kelime defterinizden çıkarıldı");
+      } else {
+        // Add to saved
+        const { error } = await supabase.from("user_saved_words").insert({
+          user_id: userId,
+          word: word.word,
+          pronunciation: word.pronunciation,
+          meaning: word.meaning,
+          example_sentence: word.example_sentence,
+        });
+        if (error) throw error;
+        setIsSaved(true);
+        toast.success("Kelime defterinize eklendi");
+      }
+    } catch (error) {
+      console.error("Failed to toggle save:", error);
+      toast.error("Bir hata oluştu");
+    } finally {
+      setSavingInProgress(false);
+    }
+  };
+
+  const handleSpeak = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if ("speechSynthesis" in window) {
+      const utterance = new SpeechSynthesisUtterance(word.word);
+      utterance.lang = "en-US";
+      utterance.rate = 0.85;
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
+  const SaveButton = () => (
+    <Button
+      variant="ghost"
+      size="icon"
+      className={`absolute top-4 right-4 z-10 h-9 w-9 rounded-full transition-all duration-300 ${
+        isSaved
+          ? "text-red-500 hover:text-red-600 hover:bg-red-50"
+          : "text-muted-foreground hover:text-red-500 hover:bg-red-50"
+      }`}
+      onClick={handleToggleSave}
+      disabled={savingInProgress}
+    >
+      <Heart
+        className={`w-5 h-5 transition-all duration-300 ${isSaved ? "fill-current scale-110" : ""}`}
+      />
+    </Button>
+  );
 
   return (
     <section className="section-padding bg-muted/50">
@@ -48,7 +177,8 @@ export default function DailyWordCard() {
             {/* Front */}
             <Card className="border-0 shadow-lg shadow-primary/5 overflow-hidden backface-hidden">
               <div className="h-2 gradient-primary" />
-              <CardContent className="p-8 text-center">
+              <CardContent className="p-8 text-center relative">
+                <SaveButton />
                 <div className="mb-4">
                   <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">
                     Bugünün Kelimesi
@@ -58,7 +188,12 @@ export default function DailyWordCard() {
                   </h3>
                   {word.pronunciation && (
                     <div className="inline-flex items-center gap-1.5 text-muted-foreground">
-                      <Volume2 className="w-4 h-4" />
+                      <button
+                        onClick={handleSpeak}
+                        className="hover:text-primary transition-colors"
+                      >
+                        <Volume2 className="w-4 h-4" />
+                      </button>
                       <span className="text-sm italic">
                         {word.pronunciation}
                       </span>
@@ -77,7 +212,8 @@ export default function DailyWordCard() {
               style={{ backfaceVisibility: "hidden" }}
             >
               <div className="h-2 gradient-warm" />
-              <CardContent className="p-8 text-center">
+              <CardContent className="p-8 text-center relative">
+                <SaveButton />
                 <div className="mb-4">
                   <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">
                     Türkçe Anlamı

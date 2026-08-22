@@ -9,11 +9,14 @@ import {
   BookOpen,
   Download,
   FileText,
-  Filter,
   Search,
   FolderOpen,
+  Lock,
+  LogIn,
+  Lightbulb,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import Link from "next/link";
 import type { Exercise } from "@/types";
 
 // Fallback exercises for demo
@@ -110,12 +113,21 @@ export default function AlistirmalarPage() {
   const [exercises, setExercises] = useState<Exercise[]>(fallbackExercises);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTab, setSelectedTab] = useState("all");
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
   useEffect(() => {
-    async function fetchExercises() {
+    async function init() {
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+
+      // Check auth
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      setIsLoggedIn(!!session?.user);
+
+      // Fetch exercises
       try {
-        const { createClient } = await import("@/lib/supabase/client");
-        const supabase = createClient();
         const { data, error } = await supabase
           .from("exercises")
           .select("*")
@@ -128,7 +140,7 @@ export default function AlistirmalarPage() {
         console.error("Failed to fetch exercises:", error);
       }
     }
-    fetchExercises();
+    init();
   }, []);
 
   const filteredExercises = exercises.filter((exercise) => {
@@ -212,15 +224,51 @@ export default function AlistirmalarPage() {
                     <p className="text-xs text-muted-foreground mb-4">
                       {exercise.category}
                     </p>
-                    <a 
-                      href={exercise.file_url} 
-                      target="_blank" 
+                    <a
+                      href={exercise.file_url}
+                      target="_blank"
                       rel="noopener noreferrer"
-                      className={buttonVariants({ variant: "outline", size: "sm", className: "w-full gap-2 text-primary border-primary/20 hover:bg-primary/5 hover:text-primary" })}
+                      className={buttonVariants({
+                        variant: "outline",
+                        size: "sm",
+                        className:
+                          "w-full gap-2 text-primary border-primary/20 hover:bg-primary/5 hover:text-primary",
+                      })}
                     >
                       <Download className="w-4 h-4" />
                       İndir
                     </a>
+
+                    {/* Solution / Hints Section - Locked for guests */}
+                    <div className="mt-3 pt-3 border-t border-border/50">
+                      {isLoggedIn === null ? null : isLoggedIn ? (
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
+                          <span>Çözüm açıklamaları erişiminiz aktif</span>
+                        </div>
+                      ) : (
+                        <div className="relative">
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground/40 blur-[2px] select-none pointer-events-none">
+                            <Lightbulb className="w-3.5 h-3.5" />
+                            <span>
+                              Çözüm ipuçları ve detaylı açıklamalar...
+                            </span>
+                          </div>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <Link href="/giris">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 text-xs gap-1.5 text-primary hover:text-primary hover:bg-primary/10"
+                              >
+                                <Lock className="w-3 h-3" />
+                                Giriş yapın
+                              </Button>
+                            </Link>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               );
@@ -236,6 +284,40 @@ export default function AlistirmalarPage() {
               Arama kriterlerinize uygun alıştırma bulunamadı.
             </p>
           </div>
+        )}
+
+        {/* Full-width lock banner for guests */}
+        {isLoggedIn === false && (
+          <Card className="mt-8 border-0 shadow-lg shadow-primary/5 overflow-hidden">
+            <div className="h-1.5 gradient-primary" />
+            <CardContent className="p-6 sm:p-8 flex flex-col sm:flex-row items-center gap-5">
+              <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+                <Lock className="w-7 h-7 text-primary" />
+              </div>
+              <div className="text-center sm:text-left flex-1">
+                <h3 className="text-lg font-semibold mb-1">
+                  Tüm İçeriklerin Kilidini Açın
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Çözüm açıklamaları, ipuçları ve detaylı analizlere erişmek
+                  için ücretsiz hesap oluşturun.
+                </p>
+              </div>
+              <div className="flex gap-2 shrink-0">
+                <Link href="/giris">
+                  <Button variant="outline" className="gap-2">
+                    <LogIn className="w-4 h-4" />
+                    Giriş Yap
+                  </Button>
+                </Link>
+                <Link href="/kayit-ol">
+                  <Button className="gap-2 gradient-primary border-0 text-white">
+                    Kayıt Ol
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
         )}
       </div>
     </div>

@@ -42,6 +42,7 @@ export default function SeviyeTestiPage() {
   // Questions State
   const [quizQuestions, setQuizQuestions] = useState<PlacementQuestion[]>([]);
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
 
   // Quiz State
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -61,6 +62,12 @@ export default function SeviyeTestiPage() {
           .select("*");
 
         if (error) throw error;
+
+        // Check auth for user_id
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          setUserId(session.user.id);
+        }
         
         const allQuestions = data || [];
         
@@ -138,6 +145,7 @@ export default function SeviyeTestiPage() {
         const { createClient } = await import("@/lib/supabase/client");
         const supabase = createClient();
         await supabase.from("quiz_results").insert({
+          user_id: userId || null,
           name: contactInfo.name,
           email: contactInfo.email,
           phone: contactInfo.phone || null,

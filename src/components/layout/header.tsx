@@ -5,6 +5,13 @@ import { useState, useEffect } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   BookOpen,
   GraduationCap,
   Menu,
@@ -12,6 +19,8 @@ import {
   Home,
   LogOut,
   LayoutDashboard,
+  User,
+  ChevronDown,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -38,13 +47,14 @@ export default function Header() {
         // Fetch role to know if we should show Admin Panel link
         const { data: profile } = await supabase
           .from("profiles")
-          .select("role")
+          .select("role, full_name")
           .eq("id", currentUser.id)
           .maybeSingle();
           
         setUser({
           ...currentUser,
-          role: profile?.role || (currentUser.email?.includes("admin") ? "admin" : "student")
+          role: profile?.role || (currentUser.email?.includes("admin") ? "admin" : "student"),
+          full_name: profile?.full_name || currentUser.user_metadata?.full_name || null,
         });
       } else {
         setUser(null);
@@ -55,13 +65,14 @@ export default function Header() {
         if (currentUser) {
           const { data: profile } = await supabase
             .from("profiles")
-            .select("role")
+            .select("role, full_name")
             .eq("id", currentUser.id)
             .maybeSingle();
             
           setUser({
             ...currentUser,
-            role: profile?.role || (currentUser.email?.includes("admin") ? "admin" : "student")
+            role: profile?.role || (currentUser.email?.includes("admin") ? "admin" : "student"),
+            full_name: profile?.full_name || currentUser.user_metadata?.full_name || null,
           });
         } else {
           setUser(null);
@@ -82,6 +93,10 @@ export default function Header() {
     router.push("/");
     router.refresh();
   };
+
+  const userInitial = user
+    ? (user.full_name || user.email || "U").charAt(0).toUpperCase()
+    : "";
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-lg">
@@ -116,25 +131,55 @@ export default function Header() {
           ))}
           <div className="ml-3 pl-3 border-l border-border flex items-center gap-2">
             {user ? (
-              <>
-                {user.role === "admin" && (
-                  <Link href="/admin">
-                    <Button variant="outline" size="sm" className="gap-2 text-primary border-primary/20 hover:bg-primary/10">
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  className="inline-flex items-center gap-2 pl-2 pr-3 h-9 rounded-md border border-input bg-background text-sm font-medium shadow-xs hover:bg-accent hover:text-accent-foreground cursor-pointer outline-none"
+                >
+                  <div className="w-6 h-6 rounded-full gradient-primary flex items-center justify-center text-white text-xs font-bold">
+                    {userInitial}
+                  </div>
+                  <span className="max-w-[120px] truncate text-sm">
+                    {user.full_name || user.email?.split("@")[0] || "Hesap"}
+                  </span>
+                  <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-52">
+                  <div className="px-2 py-1.5">
+                    <p className="text-sm font-medium truncate">
+                      {user.full_name || "Kullanıcı"}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {user.email}
+                    </p>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="gap-2 cursor-pointer"
+                    onClick={() => router.push("/profil")}
+                  >
+                    <User className="w-4 h-4" />
+                    Profilim
+                  </DropdownMenuItem>
+                  {user.role === "admin" && (
+                    <DropdownMenuItem
+                      className="gap-2 cursor-pointer"
+                      onClick={() => router.push("/admin")}
+                    >
                       <LayoutDashboard className="w-4 h-4" />
                       Admin Panel
-                    </Button>
-                  </Link>
-                )}
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20"
-                  onClick={handleLogout}
-                >
-                  <LogOut className="w-4 h-4" />
-                  Çıkış
-                </Button>
-              </>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    variant="destructive"
+                    className="gap-2 cursor-pointer"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Çıkış Yap
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
               <>
                 <Link href="/giris">
@@ -165,6 +210,23 @@ export default function Header() {
                 </div>
                 <span className="text-base font-bold">English Academy</span>
               </div>
+
+              {/* User info for mobile */}
+              {user && (
+                <div className="flex items-center gap-3 px-3 py-3 rounded-xl bg-muted/50 border border-border/50">
+                  <div className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center text-white font-bold">
+                    {userInitial}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">
+                      {user.full_name || "Kullanıcı"}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {user.email}
+                    </p>
+                  </div>
+                </div>
+              )}
               
               {navLinks.map((link) => (
                 <Link
@@ -181,6 +243,15 @@ export default function Header() {
               <div className="pt-4 border-t border-border flex flex-col gap-2">
                 {user ? (
                   <>
+                    <Link href="/profil" onClick={() => setIsOpen(false)}>
+                      <Button 
+                        variant="outline" 
+                        className="w-full gap-2 justify-start"
+                      >
+                        <User className="w-4 h-4" />
+                        Profilim
+                      </Button>
+                    </Link>
                     {user.role === "admin" && (
                       <Link href="/admin" onClick={() => setIsOpen(false)}>
                         <Button 

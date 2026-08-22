@@ -5,6 +5,8 @@
 export interface Profile {
   id: string;
   email: string;
+  full_name: string | null;
+  estimated_level: string | null;
   role: "admin" | "student";
   created_at: string;
 }
@@ -43,12 +45,23 @@ export interface DailyWord {
 
 export interface QuizResult {
   id: string;
+  user_id: string | null;
   name: string;
   email: string;
   phone: string | null;
   score: number;
   total_questions: number;
   estimated_level: string | null;
+  created_at: string;
+}
+
+export interface UserSavedWord {
+  id: string;
+  user_id: string;
+  word: string;
+  pronunciation: string | null;
+  meaning: string;
+  example_sentence: string | null;
   created_at: string;
 }
 
