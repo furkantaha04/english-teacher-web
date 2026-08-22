@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -28,13 +29,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Plus, Pencil, Trash2 } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, Search } from "lucide-react";
 import { toast } from "sonner";
 import { PlacementQuestion } from "@/types";
 
 export default function PlacementQuestionsAdmin() {
   const [questions, setQuestions] = useState<PlacementQuestion[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Filters
+  const [searchQuery, setSearchQuery] = useState("");
+  const [levelFilter, setLevelFilter] = useState<"Tümü" | "A1" | "A2" | "B1" | "B2" | "C1" | "C2">("Tümü");
 
   // Dialog State
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -177,28 +182,105 @@ export default function PlacementQuestionsAdmin() {
     }
   };
 
+  // Derived state for stats and filtering
+  const totalQuestions = questions.length;
+  const levelCounts = {
+    A1: questions.filter(q => q.level === "A1").length,
+    A2: questions.filter(q => q.level === "A2").length,
+    B1: questions.filter(q => q.level === "B1").length,
+    B2: questions.filter(q => q.level === "B2").length,
+    C1: questions.filter(q => q.level === "C1").length,
+    C2: questions.filter(q => q.level === "C2").length,
+  };
+
+  const filteredQuestions = questions.filter(q => {
+    const matchesLevel = levelFilter === "Tümü" || q.level === levelFilter;
+    const matchesSearch = q.question_text.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesLevel && matchesSearch;
+  });
+
   return (
-    <div>
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+    <div className="w-full">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Seviye Tespit Soruları</h1>
-          <p className="text-muted-foreground mt-1">
-            Sınavdaki soruları buradan yönetebilirsiniz.
+          <p className="text-muted-foreground mt-1 text-sm">
+            Sınavdaki soruları buradan yönetebilir ve filtreleyebilirsiniz.
           </p>
         </div>
-        <Button onClick={() => handleOpenDialog()} className="gap-2">
+        <Button onClick={() => handleOpenDialog()} className="gap-2 shrink-0">
           <Plus className="w-4 h-4" />
           Yeni Soru Ekle
         </Button>
       </div>
 
-      <div className="border border-border rounded-xl bg-card overflow-hidden">
-        <Table>
+      {/* Stats Cards */}
+      <div className="flex overflow-x-auto pb-4 mb-2 gap-3 snap-x">
+        <Card className="bg-primary/10 border-primary/20 shrink-0 min-w-[110px] snap-start">
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-primary">{totalQuestions}</div>
+            <div className="text-xs text-muted-foreground mt-1 font-medium">Toplam Soru</div>
+          </CardContent>
+        </Card>
+        {Object.entries(levelCounts).map(([level, count]) => (
+          <Card key={level} className="shrink-0 min-w-[90px] snap-start">
+            <CardContent className="p-4 text-center">
+              <div className="text-xl font-bold">{count}</div>
+              <div className="text-xs text-muted-foreground mt-1 font-medium">{level} Seviyesi</div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Filters and Search */}
+      <div className="flex flex-col md:flex-row gap-4 mb-6 items-start md:items-center justify-between">
+        <div className="flex w-full md:w-auto items-center gap-2 overflow-x-auto pb-2 md:pb-0 snap-x">
+          <Button 
+            variant={levelFilter === "Tümü" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setLevelFilter("Tümü")}
+            className="shrink-0 snap-start"
+          >
+            Tümü
+          </Button>
+          {(["A1", "A2", "B1", "B2", "C1", "C2"] as const).map((level) => (
+            <Button 
+              key={level}
+              variant={levelFilter === level ? "default" : "outline"}
+              size="sm"
+              onClick={() => setLevelFilter(level)}
+              className="shrink-0 snap-start"
+            >
+              {level}
+            </Button>
+          ))}
+        </div>
+        
+        <div className="relative w-full md:w-72 shrink-0">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Soru metninde ara..."
+            className="pl-8"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+      </div>
+      
+      <div className="text-sm text-muted-foreground mb-4">
+        {levelFilter !== "Tümü" && <span className="font-semibold text-foreground mr-1">{levelFilter} seviyesinde</span>}
+        {filteredQuestions.length} soru bulundu.
+      </div>
+
+      {/* Table */}
+      <div className="border border-border rounded-xl bg-card overflow-x-auto">
+        <Table className="min-w-[600px]">
           <TableHeader>
             <TableRow className="bg-muted/50 hover:bg-muted/50">
-              <TableHead className="w-[100px]">Seviye</TableHead>
+              <TableHead className="w-[80px]">Seviye</TableHead>
               <TableHead>Soru</TableHead>
-              <TableHead className="text-right">İşlemler</TableHead>
+              <TableHead className="text-right w-[120px]">İşlemler</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -209,23 +291,23 @@ export default function PlacementQuestionsAdmin() {
                   <p className="text-muted-foreground mt-2">Yükleniyor...</p>
                 </TableCell>
               </TableRow>
-            ) : questions.length === 0 ? (
+            ) : filteredQuestions.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={3} className="text-center py-10">
                   <p className="text-muted-foreground">Kayıtlı soru bulunamadı.</p>
                 </TableCell>
               </TableRow>
             ) : (
-              questions.map((q) => (
+              filteredQuestions.map((q) => (
                 <TableRow key={q.id}>
                   <TableCell>
                     <Badge variant="outline">{q.level}</Badge>
                   </TableCell>
-                  <TableCell className="max-w-md truncate">
+                  <TableCell className="max-w-md sm:max-w-lg truncate">
                     {q.question_text}
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
+                    <div className="flex justify-end gap-1 sm:gap-2">
                       <Button
                         variant="ghost"
                         size="icon"
@@ -249,8 +331,9 @@ export default function PlacementQuestionsAdmin() {
         </Table>
       </div>
 
+      {/* Dialog for Edit / Create */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingId ? "Soruyu Düzenle" : "Yeni Soru Ekle"}
@@ -337,10 +420,11 @@ export default function PlacementQuestionsAdmin() {
                 variant="outline"
                 onClick={() => setIsDialogOpen(false)}
                 disabled={isSubmitting}
+                className="w-full sm:w-auto"
               >
                 İptal
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto mt-2 sm:mt-0">
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
