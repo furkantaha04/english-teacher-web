@@ -74,7 +74,7 @@ export default function AdminSidebar() {
           <div className="flex flex-col">
             <span className="text-sm font-bold leading-tight">Admin Panel</span>
             <span className="text-[10px] text-muted-foreground leading-none">
-              English Academy
+              English with İnayet
             </span>
           </div>
         </Link>

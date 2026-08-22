@@ -5,8 +5,8 @@ import LayoutShell from "@/components/layout/layout-shell";
 
 export const metadata: Metadata = {
   title: {
-    default: "English Academy | Profesyonel İngilizce Eğitimi",
-    template: "%s | English Academy",
+    default: "English with İnayet | İngilizce Öğrenmenin Kolay Yolu",
+    template: "%s | English with İnayet",
   },
   description:
     "Uzman öğretmen rehberliğinde kişiselleştirilmiş İngilizce eğitimi. YDT, YDS hazırlık, genel İngilizce ve konuşma dersleri.",

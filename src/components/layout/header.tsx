@@ -108,7 +108,7 @@ export default function Header() {
           </div>
           <div className="flex flex-col">
             <span className="text-base font-bold leading-tight tracking-tight text-foreground">
-              English Academy
+              English with İnayet
             </span>
             <span className="text-[10px] font-medium text-muted-foreground leading-none">
               Profesyonel Dil Eğitimi
@@ -208,7 +208,7 @@ export default function Header() {
                 <div className="flex items-center justify-center w-9 h-9 rounded-xl gradient-primary text-white">
                   <GraduationCap className="w-5 h-5" />
                 </div>
-                <span className="text-base font-bold">English Academy</span>
+                <span className="text-base font-bold">English with İnayet</span>
               </div>
 
               {/* User info for mobile */}

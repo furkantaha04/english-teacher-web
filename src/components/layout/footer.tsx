@@ -22,7 +22,7 @@ export default function Footer() {
               </div>
               <div className="flex flex-col">
                 <span className="text-base font-bold text-background leading-tight">
-                  English Academy
+                  English with İnayet
                 </span>
                 <span className="text-[10px] font-medium text-background/50 leading-none">
                   Profesyonel Dil Eğitimi
@@ -96,7 +96,7 @@ export default function Footer() {
               <li className="flex items-start gap-2.5">
                 <Mail className="w-4 h-4 mt-0.5 text-primary" />
                 <span className="text-sm text-background/60">
-                  info@englishacademy.com
+                  info@englishwithinayet.com
                 </span>
               </li>
               <li className="flex items-start gap-2.5">
@@ -118,7 +118,7 @@ export default function Footer() {
         <Separator className="my-8 bg-background/10" />
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-background/40">
-          <p>© {new Date().getFullYear()} English Academy. Tüm hakları saklıdır.</p>
+          <p>© {new Date().getFullYear()} English with İnayet. Tüm hakları saklıdır.</p>
           <p>Profesyonel İngilizce Eğitimi</p>
         </div>
       </div>

@@ -33,16 +33,14 @@ export default function HeroSection() {
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight">
-              İngilizceyi{" "}
-              <span className="text-gradient">Doğru Öğrenin,</span>
+              English with İnayet ile{" "}
+              <span className="text-gradient">İngilizce Yolculuğun</span>
               <br />
-              Güvenle Konuşun
+              Başlasın
             </h1>
 
             <p className="text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0 leading-relaxed">
-              Deneyimli öğretmen rehberliğinde kişiselleştirilmiş ders planları,
-              interaktif alıştırmalar ve gerçek yaşam pratikleriyle İngilizce
-              öğrenme yolculuğunuza başlayın.
+              Kişiselleştirilmiş alıştırmalar, günlük kelimeler ve pratik çözümlerle hedeflerine adım adım ulaş.
             </p>
 
             {/* Credentials */}
@@ -98,7 +96,7 @@ export default function HeroSection() {
               <div className="w-80 h-96 lg:w-96 lg:h-[440px] rounded-3xl shadow-2xl shadow-primary/20 flex items-center justify-center overflow-hidden relative">
                 <Image 
                   src="/hero-image.jpg" 
-                  alt="English Academy" 
+                  alt="English with İnayet" 
                   fill 
                   className="object-cover" 
                   priority
