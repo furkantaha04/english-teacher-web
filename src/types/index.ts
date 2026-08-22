@@ -27,10 +27,13 @@ export interface ContactMessage {
 export interface Exercise {
   id: string;
   title: string;
-  level: "A1-A2" | "B1-B2" | "C1";
+  level: string;
   category: string;
+  description: string | null;
   file_url: string;
   file_name: string | null;
+  solution_url: string | null;
+  solution_explanation: string | null;
   created_at: string;
 }
 

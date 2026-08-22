@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   BookOpen,
   Download,
@@ -13,92 +12,28 @@ import {
   FolderOpen,
   Lock,
   LogIn,
+  KeyRound,
   Lightbulb,
+  Loader2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import Link from "next/link";
 import type { Exercise } from "@/types";
 
-// Fallback exercises for demo
-const fallbackExercises: Exercise[] = [
-  {
-    id: "1",
-    title: "Present Simple & Present Continuous",
-    level: "A1-A2",
-    category: "Grammar",
-    file_url: "#",
-    file_name: "present-simple-continuous.pdf",
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: "2",
-    title: "Past Tense Exercises",
-    level: "A1-A2",
-    category: "Grammar",
-    file_url: "#",
-    file_name: "past-tense.pdf",
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: "3",
-    title: "Vocabulary: Daily Life",
-    level: "A1-A2",
-    category: "Vocabulary",
-    file_url: "#",
-    file_name: "daily-life-vocab.pdf",
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: "4",
-    title: "Conditionals (Type 1, 2, 3)",
-    level: "B1-B2",
-    category: "Grammar",
-    file_url: "#",
-    file_name: "conditionals.pdf",
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: "5",
-    title: "Reading Comprehension: Technology",
-    level: "B1-B2",
-    category: "Reading",
-    file_url: "#",
-    file_name: "reading-technology.pdf",
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: "6",
-    title: "Academic Writing Techniques",
-    level: "C1",
-    category: "Writing",
-    file_url: "#",
-    file_name: "academic-writing.pdf",
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: "7",
-    title: "Advanced Idioms & Phrasal Verbs",
-    level: "C1",
-    category: "Vocabulary",
-    file_url: "#",
-    file_name: "advanced-idioms.pdf",
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: "8",
-    title: "Listening Practice: Conversations",
-    level: "B1-B2",
-    category: "Listening",
-    file_url: "#",
-    file_name: "listening-conversations.pdf",
-    created_at: new Date().toISOString(),
-  },
-];
-
 const levelColors: Record<string, string> = {
-  "A1-A2": "bg-emerald-100 text-emerald-700",
-  "B1-B2": "bg-blue-100 text-blue-700",
+  A1: "bg-emerald-100 text-emerald-700",
+  A2: "bg-teal-100 text-teal-700",
+  B1: "bg-blue-100 text-blue-700",
+  B2: "bg-indigo-100 text-indigo-700",
   C1: "bg-purple-100 text-purple-700",
+  C2: "bg-fuchsia-100 text-fuchsia-700",
 };
 
 const categoryIcons: Record<string, typeof BookOpen> = {
@@ -107,37 +42,40 @@ const categoryIcons: Record<string, typeof BookOpen> = {
   Reading: BookOpen,
   Writing: FileText,
   Listening: BookOpen,
+  Speaking: FileText,
 };
 
 export default function AlistirmalarPage() {
-  const [exercises, setExercises] = useState<Exercise[]>(fallbackExercises);
+  const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTab, setSelectedTab] = useState("all");
+  const [selectedLevel, setSelectedLevel] = useState("all");
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
   useEffect(() => {
     async function init() {
-      const { createClient } = await import("@/lib/supabase/client");
-      const supabase = createClient();
-
-      // Check auth
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      setIsLoggedIn(!!session?.user);
-
-      // Fetch exercises
       try {
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+
+        // Check auth
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        setIsLoggedIn(!!session?.user);
+
+        // Fetch exercises from DB only
         const { data, error } = await supabase
           .from("exercises")
           .select("*")
           .order("created_at", { ascending: false });
 
-        if (data && data.length > 0) {
-          setExercises(data);
-        }
+        if (error) throw error;
+        if (data) setExercises(data);
       } catch (error) {
         console.error("Failed to fetch exercises:", error);
+      } finally {
+        setLoading(false);
       }
     }
     init();
@@ -148,9 +86,12 @@ export default function AlistirmalarPage() {
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
     const matchesLevel =
-      selectedTab === "all" || exercise.level === selectedTab;
+      selectedLevel === "all" || exercise.level === selectedLevel;
     return matchesSearch && matchesLevel;
   });
+
+  // Collect unique levels from DB data for dynamic tabs
+  const uniqueLevels = [...new Set(exercises.map((e) => e.level))].sort();
 
   return (
     <div className="section-padding">
@@ -180,105 +121,175 @@ export default function AlistirmalarPage() {
               className="pl-10"
             />
           </div>
+          <Select value={selectedLevel} onValueChange={(val) => setSelectedLevel(val || "all")}>
+            <SelectTrigger className="w-full sm:w-40">
+              <SelectValue placeholder="Seviye" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tüm Seviyeler</SelectItem>
+              {uniqueLevels.map((lv) => (
+                <SelectItem key={lv} value={lv}>
+                  {lv}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
-        {/* Level Tabs */}
-        <Tabs
-          value={selectedTab}
-          onValueChange={setSelectedTab}
-          className="mb-8"
-        >
-          <TabsList className="grid w-full grid-cols-4 max-w-md">
-            <TabsTrigger value="all">Tümü</TabsTrigger>
-            <TabsTrigger value="A1-A2">A1-A2</TabsTrigger>
-            <TabsTrigger value="B1-B2">B1-B2</TabsTrigger>
-            <TabsTrigger value="C1">C1</TabsTrigger>
-          </TabsList>
-        </Tabs>
-
-        {/* Exercise Grid */}
-        {filteredExercises.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        {/* Loading State */}
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
+            <p className="text-muted-foreground">Alıştırmalar yükleniyor...</p>
+          </div>
+        ) : filteredExercises.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredExercises.map((exercise) => {
               const IconComponent =
                 categoryIcons[exercise.category] || FileText;
               return (
                 <Card
                   key={exercise.id}
-                  className="group border-0 shadow-md shadow-black/5 hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-0.5"
+                  className="group border-0 shadow-md shadow-black/5 hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-0.5 flex flex-col"
                 >
-                  <CardContent className="p-5">
+                  <CardContent className="p-5 flex flex-col flex-1">
+                    {/* Top row: icon + level badge */}
                     <div className="flex items-start justify-between mb-3">
                       <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                         <IconComponent className="w-5 h-5 text-primary" />
                       </div>
                       <Badge
-                        className={`text-xs ${levelColors[exercise.level] || ""}`}
+                        className={`text-xs ${levelColors[exercise.level] || "bg-gray-100 text-gray-700"}`}
                       >
                         {exercise.level}
                       </Badge>
                     </div>
+
+                    {/* Title & category */}
                     <h3 className="font-semibold text-sm mb-1 line-clamp-2">
                       {exercise.title}
                     </h3>
-                    <p className="text-xs text-muted-foreground mb-4">
+                    <p className="text-xs text-muted-foreground mb-1">
                       {exercise.category}
                     </p>
-                    <a
-                      href={exercise.file_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={buttonVariants({
-                        variant: "outline",
-                        size: "sm",
-                        className:
-                          "w-full gap-2 text-primary border-primary/20 hover:bg-primary/5 hover:text-primary",
-                      })}
-                    >
-                      <Download className="w-4 h-4" />
-                      İndir
-                    </a>
 
-                    {/* Solution / Hints Section - Locked for guests */}
-                    <div className="mt-3 pt-3 border-t border-border/50">
-                      {isLoggedIn === null ? null : isLoggedIn ? (
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
-                          <span>Çözüm açıklamaları erişiminiz aktif</span>
-                        </div>
-                      ) : (
-                        <div className="relative">
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground/40 blur-[2px] select-none pointer-events-none">
-                            <Lightbulb className="w-3.5 h-3.5" />
-                            <span>
-                              Çözüm ipuçları ve detaylı açıklamalar...
-                            </span>
-                          </div>
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <Link href="/giris">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 text-xs gap-1.5 text-primary hover:text-primary hover:bg-primary/10"
+                    {/* Description */}
+                    {exercise.description && (
+                      <p className="text-xs text-muted-foreground/70 mb-3 line-clamp-2">
+                        {exercise.description}
+                      </p>
+                    )}
+
+                    {/* Spacer */}
+                    <div className="flex-1" />
+
+                    {/* Download Exercise Button - open to all */}
+                    {exercise.file_url && (
+                      <a
+                        href={exercise.file_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={buttonVariants({
+                          variant: "outline",
+                          size: "sm",
+                          className:
+                            "w-full gap-2 text-primary border-primary/20 hover:bg-primary/5 hover:text-primary",
+                        })}
+                      >
+                        <Download className="w-4 h-4" />
+                        Alıştırmayı İndir (PDF)
+                      </a>
+                    )}
+
+                    {/* Solution Section - Locked for guests */}
+                    {(exercise.solution_url || exercise.solution_explanation) && (
+                      <div className="mt-3 pt-3 border-t border-border/50">
+                        {isLoggedIn === null ? null : isLoggedIn ? (
+                          <div className="space-y-2">
+                            {exercise.solution_url && (
+                              <a
+                                href={exercise.solution_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={buttonVariants({
+                                  variant: "outline",
+                                  size: "sm",
+                                  className:
+                                    "w-full gap-2 text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700",
+                                })}
                               >
-                                <Lock className="w-3 h-3" />
-                                Giriş yapın
-                              </Button>
-                            </Link>
+                                <KeyRound className="w-4 h-4" />
+                                Cevap Anahtarını İndir (PDF)
+                              </a>
+                            )}
+                            {exercise.solution_explanation && (
+                              <div className="bg-amber-50/50 rounded-lg p-3 mt-2">
+                                <div className="flex items-center gap-1.5 mb-1">
+                                  <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
+                                  <span className="text-xs font-medium text-amber-700">
+                                    Çözüm Notu
+                                  </span>
+                                </div>
+                                <p className="text-xs text-muted-foreground leading-relaxed">
+                                  {exercise.solution_explanation}
+                                </p>
+                              </div>
+                            )}
                           </div>
-                        </div>
-                      )}
-                    </div>
+                        ) : (
+                          <div className="relative">
+                            <div className="flex flex-col gap-2 blur-[3px] select-none pointer-events-none opacity-40">
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground h-8 border rounded-md px-3">
+                                <KeyRound className="w-3.5 h-3.5" />
+                                <span>Cevap Anahtarını İndir (PDF)</span>
+                              </div>
+                              {exercise.solution_explanation && (
+                                <div className="bg-muted/50 rounded-lg p-3">
+                                  <p className="text-xs text-muted-foreground">
+                                    Çözüm açıklaması...
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                            <div className="absolute inset-0 flex items-center justify-center bg-background/30 rounded-lg">
+                              <Link href="/giris">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 text-xs gap-1.5 text-primary hover:text-primary hover:bg-primary/10"
+                                >
+                                  <Lock className="w-3.5 h-3.5" />
+                                  Cevap anahtarı için giriş yapın
+                                </Button>
+                              </Link>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               );
             })}
           </div>
-        ) : (
-          <div className="text-center py-16">
-            <FolderOpen className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
+        ) : exercises.length === 0 ? (
+          /* No exercises in DB at all */
+          <div className="text-center py-20">
+            <FolderOpen className="w-14 h-14 text-muted-foreground/30 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-muted-foreground mb-1">
-              Alıştırma bulunamadı
+              Henüz alıştırma eklenmedi
+            </h3>
+            <p className="text-sm text-muted-foreground/60 max-w-sm mx-auto">
+              Öğretmeniniz yakında alıştırma materyalleri ekleyecek. Lütfen daha
+              sonra tekrar kontrol edin.
+            </p>
+          </div>
+        ) : (
+          /* Exercises exist but search/filter returns empty */
+          <div className="text-center py-16">
+            <Search className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-muted-foreground mb-1">
+              Sonuç bulunamadı
             </h3>
             <p className="text-sm text-muted-foreground/60">
               Arama kriterlerinize uygun alıştırma bulunamadı.
@@ -287,7 +298,7 @@ export default function AlistirmalarPage() {
         )}
 
         {/* Full-width lock banner for guests */}
-        {isLoggedIn === false && (
+        {isLoggedIn === false && exercises.length > 0 && (
           <Card className="mt-8 border-0 shadow-lg shadow-primary/5 overflow-hidden">
             <div className="h-1.5 gradient-primary" />
             <CardContent className="p-6 sm:p-8 flex flex-col sm:flex-row items-center gap-5">
@@ -296,11 +307,11 @@ export default function AlistirmalarPage() {
               </div>
               <div className="text-center sm:text-left flex-1">
                 <h3 className="text-lg font-semibold mb-1">
-                  Tüm İçeriklerin Kilidini Açın
+                  Cevap Anahtarlarının Kilidini Açın
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  Çözüm açıklamaları, ipuçları ve detaylı analizlere erişmek
-                  için ücretsiz hesap oluşturun.
+                  Cevap anahtarları, çözüm açıklamaları ve detaylı analizlere
+                  erişmek için ücretsiz hesap oluşturun.
                 </p>
               </div>
               <div className="flex gap-2 shrink-0">

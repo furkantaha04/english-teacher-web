@@ -54,13 +54,32 @@ export const exerciseUploadSchema = z.object({
     .string()
     .min(3, "Başlık en az 3 karakter olmalıdır")
     .max(100, "Başlık en fazla 100 karakter olabilir"),
-  level: z.enum(["A1-A2", "B1-B2", "C1"], {
+  level: z.enum(["A1", "A2", "B1", "B2", "C1", "C2"], {
     message: "Bir seviye seçin",
   }),
   category: z
     .string()
     .min(2, "Kategori seçin")
     .max(50, "Kategori en fazla 50 karakter olabilir"),
+  description: z
+    .string()
+    .max(500, "Açıklama en fazla 500 karakter olabilir")
+    .optional()
+    .or(z.literal("")),
+  file_url: z
+    .string()
+    .min(1, "Alıştırma dosya linki gereklidir")
+    .url("Geçerli bir URL girin"),
+  solution_url: z
+    .string()
+    .url("Geçerli bir URL girin")
+    .optional()
+    .or(z.literal("")),
+  solution_explanation: z
+    .string()
+    .max(2000, "Çözüm notu en fazla 2000 karakter olabilir")
+    .optional()
+    .or(z.literal("")),
 });
 
 export type ExerciseUploadValues = z.infer<typeof exerciseUploadSchema>;
