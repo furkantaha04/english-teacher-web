@@ -1,51 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Quote, ChevronLeft, ChevronRight, Star } from "lucide-react";
-
-const testimonials = [
-  {
-    name: "Ayşe K.",
-    level: "B2 → C1",
-    comment:
-      "6 ayda B2'den C1 seviyesine geçtim. Ders planları tamamen bana özeldi ve öğretmenimin motivasyonu inanılmazdı. YDS'den 90 puan aldım!",
-    rating: 5,
-  },
-  {
-    name: "Mehmet Y.",
-    level: "A2 → B1",
-    comment:
-      "İngilizce konuşmaktan korkardım. Speaking derslerinden sonra artık iş toplantılarımı İngilizce yapabiliyorum. Çok teşekkür ederim!",
-    rating: 5,
-  },
-  {
-    name: "Elif S.",
-    level: "B1 → B2",
-    comment:
-      "YDT sınavına hazırlanırken aldığım birebir dersler sayesinde hedeflediğim puanı kolayca aştım. Alıştırmalar ve kaynaklar çok faydalıydı.",
-    rating: 5,
-  },
-  {
-    name: "Can D.",
-    level: "A1 → A2",
-    comment:
-      "Sıfırdan başladım ve 4 ayda günlük İngilizce konuşabilecek seviyeye geldim. Derslerin interaktif ve eğlenceli olması motivasyonumu hiç düşürmedi.",
-    rating: 5,
-  },
-  {
-    name: "Zeynep T.",
-    level: "B2 → C1",
-    comment:
-      "Akademik İngilizce için başvurduğum en iyi karar oldu. Yurtdışı yüksek lisans başvurumda IELTS puanım 7.5 geldi!",
-    rating: 5,
-  },
-];
+import { Quote, ChevronLeft, ChevronRight, Star, Loader2 } from "lucide-react";
+import type { Testimonial } from "@/types";
 
 export default function TestimonialsSection() {
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchTestimonials() {
+      try {
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from("testimonials")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+        setTestimonials(data || []);
+      } catch (error) {
+        console.error("Failed to load testimonials:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchTestimonials();
+  }, []);
 
   const goToPrev = () => {
     setCurrentIndex((prev) =>
@@ -61,12 +47,25 @@ export default function TestimonialsSection() {
 
   // Show 3 testimonials on desktop, 1 on mobile
   const getVisibleTestimonials = () => {
+    if (testimonials.length === 0) return [];
     const visible = [];
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < Math.min(3, testimonials.length); i++) {
       visible.push(testimonials[(currentIndex + i) % testimonials.length]);
     }
     return visible;
   };
+
+  if (loading) {
+    return (
+      <section className="section-padding bg-muted/30">
+        <div className="container-main flex items-center justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        </div>
+      </section>
+    );
+  }
+
+  if (testimonials.length === 0) return null;
 
   return (
     <section className="section-padding bg-muted/30">
@@ -88,7 +87,7 @@ export default function TestimonialsSection() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {getVisibleTestimonials().map((testimonial, index) => (
               <Card
-                key={`${testimonial.name}-${index}`}
+                key={`${testimonial.id}-${index}`}
                 className="border-0 shadow-md shadow-black/5 hover:shadow-lg transition-all duration-300"
               >
                 <CardContent className="p-6">
@@ -120,37 +119,39 @@ export default function TestimonialsSection() {
           </div>
 
           {/* Navigation */}
-          <div className="flex items-center justify-center gap-3 mt-8">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={goToPrev}
-              className="rounded-full"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <div className="flex gap-1.5">
-              {testimonials.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentIndex(index)}
-                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                    index === currentIndex
-                      ? "bg-primary w-6"
-                      : "bg-primary/20 hover:bg-primary/40"
-                  }`}
-                />
-              ))}
+          {testimonials.length > 3 && (
+            <div className="flex items-center justify-center gap-3 mt-8">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={goToPrev}
+                className="rounded-full"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <div className="flex gap-1.5">
+                {testimonials.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentIndex(index)}
+                    className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                      index === currentIndex
+                        ? "bg-primary w-6"
+                        : "bg-primary/20 hover:bg-primary/40"
+                    }`}
+                  />
+                ))}
+              </div>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={goToNext}
+                className="rounded-full"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
             </div>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={goToNext}
-              className="rounded-full"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
+          )}
         </div>
       </div>
     </section>

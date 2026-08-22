@@ -39,9 +39,11 @@ export default function HeroSection() {
               Başlasın
             </h1>
 
-            <p className="text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0 leading-relaxed">
-              Kişiselleştirilmiş alıştırmalar, günlük kelimeler ve pratik çözümlerle hedeflerine adım adım ulaş.
-            </p>
+            <div className="text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0 leading-relaxed space-y-4">
+              <p className="font-semibold text-foreground">Welcome to English with Inayet</p>
+              <p>My name is Inayet. I created this channel to help people learn English — even if they know nothing at all.</p>
+              <p>If you feel scared or confused about English, do not worry. You are not alone. I will guide you step by step, from zero to advanced.</p>
+            </div>
 
             {/* Credentials */}
             <div className="flex flex-wrap justify-center lg:justify-start gap-3">

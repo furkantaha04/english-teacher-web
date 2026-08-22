@@ -115,8 +115,62 @@ export interface ServiceItem {
 }
 
 export interface Testimonial {
+  id: string;
   name: string;
   level: string;
   comment: string;
-  avatar: string;
+  rating: number;
+  created_at: string;
+}
+
+// ==========================================
+// Lesson Booking Types
+// ==========================================
+
+export interface LessonBooking {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  date: string;
+  time: string;
+  lesson_type: string;
+  status: "pending" | "approved";
+  created_at: string;
+}
+
+// ==========================================
+// Daily Discussion Types
+// ==========================================
+
+export interface DailyDiscussion {
+  id: string;
+  title: string;
+  question: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface DiscussionReply {
+  id: string;
+  discussion_id: string;
+  user_id: string;
+  user_name: string;
+  reply_text: string;
+  created_at: string;
+}
+
+// ==========================================
+// Blog Types
+// ==========================================
+
+export interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  category: string;
+  summary: string;
+  content: string;
+  published: boolean;
+  created_at: string;
 }

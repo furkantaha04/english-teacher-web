@@ -21,6 +21,7 @@ import {
   LayoutDashboard,
   User,
   ChevronDown,
+  MessageCircle,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -28,6 +29,8 @@ const navLinks = [
   { href: "/", label: "Ana Sayfa", icon: Home },
   { href: "/alistirmalar", label: "Alıştırmalar", icon: BookOpen },
   { href: "/seviye-testi", label: "Seviye Testi", icon: ClipboardCheck },
+  { href: "/blog", label: "Blog", icon: BookOpen },
+  { href: "/topluluk", label: "Topluluk", icon: MessageCircle },
 ];
 
 export default function Header() {

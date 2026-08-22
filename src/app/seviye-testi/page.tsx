@@ -359,6 +359,60 @@ export default function SeviyeTestiPage() {
   }
 
   // Step 3: Results
+  const levelNames: Record<string, string> = {
+    A1: "A1 Beginner",
+    A2: "A2 Elementary",
+    B1: "B1 Intermediate",
+    B2: "B2 Upper Intermediate",
+    C1: "C1 Advanced",
+    C2: "C2 Proficient",
+  };
+
+  const handleDownloadCertificate = async () => {
+    const el = document.getElementById("certificate-card");
+    if (!el) return;
+    try {
+      const html2canvas = (await import("html2canvas")).default;
+      const canvas = await html2canvas(el, {
+        scale: 2,
+        backgroundColor: null,
+        useCORS: true,
+      });
+      const link = document.createElement("a");
+      link.download = `English_with_Inayet_Sertifika_${contactInfo.name.replace(/\s+/g, "_")}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    } catch (error) {
+      console.error("Certificate download error:", error);
+      toast.error("Sertifika indirilemedi.");
+    }
+  };
+
+  const handleShareCertificate = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "English with İnayet - Seviye Testi Sertifikam",
+          text: `${contactInfo.name} olarak English with İnayet Seviye Testini tamamladım! Seviyem: ${levelNames[estimatedLevel] || estimatedLevel}`,
+          url: window.location.href,
+        });
+      } catch {
+        // User cancelled share
+      }
+    } else {
+      // Fallback: copy to clipboard
+      const text = `${contactInfo.name} olarak English with İnayet Seviye Testini tamamladım! Seviyem: ${levelNames[estimatedLevel] || estimatedLevel}`;
+      await navigator.clipboard.writeText(text);
+      toast.success("Paylaşım metni kopyalandı!");
+    }
+  };
+
+  const completedDate = new Date().toLocaleDateString("tr-TR", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+
   return (
     <div className="section-padding">
       <div className="container-main max-w-lg">
@@ -390,8 +444,69 @@ export default function SeviyeTestiPage() {
               </Badge>
             </div>
 
+            {/* Certificate Card */}
+            <div
+              id="certificate-card"
+              className="relative rounded-2xl overflow-hidden mb-6 text-white"
+              style={{
+                background: "linear-gradient(135deg, oklch(0.55 0.2 260), oklch(0.40 0.22 280))",
+                padding: "2rem",
+              }}
+            >
+              <div
+                className="absolute inset-0 opacity-10"
+                style={{
+                  backgroundImage: "radial-gradient(circle at 20% 80%, rgba(255,255,255,0.3) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255,255,255,0.2) 0%, transparent 50%)",
+                }}
+              />
+              <div className="relative z-10">
+                <div className="flex items-center justify-center gap-2 mb-4">
+                  <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+                    <Trophy className="w-4 h-4" />
+                  </div>
+                  <span className="text-sm font-semibold tracking-wide uppercase opacity-90">
+                    Başarı Sertifikası
+                  </span>
+                </div>
+                <div className="border-t border-white/20 pt-4 mb-4">
+                  <p className="text-xs opacity-70 mb-1">Bu sertifika</p>
+                  <p className="text-xl font-bold mb-1">{contactInfo.name}</p>
+                  <p className="text-xs opacity-70">
+                    adlı öğrencinin seviye tespit sınavını başarıyla tamamladığını belgeler.
+                  </p>
+                </div>
+                <div className="bg-white/15 rounded-xl p-3 mb-4">
+                  <p className="text-xs opacity-70 mb-1">Tespit Edilen Seviye</p>
+                  <p className="text-lg font-bold">{levelNames[estimatedLevel] || estimatedLevel}</p>
+                </div>
+                <div className="flex items-center justify-between text-xs opacity-60">
+                  <span>{completedDate}</span>
+                  <span>English with İnayet</span>
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-3">
-              <a 
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  size="lg"
+                  className="w-full gap-2 gradient-primary border-0 text-white hover:opacity-90"
+                  onClick={handleDownloadCertificate}
+                >
+                  <ArrowRight className="w-4 h-4" />
+                  İndir
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-full gap-2"
+                  onClick={handleShareCertificate}
+                >
+                  <BarChart3 className="w-4 h-4" />
+                  Paylaş
+                </Button>
+              </div>
+              <a
                 href="#iletisim"
                 className={buttonVariants({ size: "lg", className: "w-full gap-2 gradient-primary border-0 text-white hover:opacity-90" })}
               >
@@ -420,3 +535,4 @@ export default function SeviyeTestiPage() {
     </div>
   );
 }
+

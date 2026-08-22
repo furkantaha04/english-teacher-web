@@ -14,6 +14,9 @@ import {
   Menu,
   Home,
   ClipboardCheck,
+  CalendarDays,
+  MessageCircle,
+  MessageSquare,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
@@ -30,6 +33,11 @@ const sidebarLinks = [
     icon: Inbox,
   },
   {
+    href: "/admin/randevular",
+    label: "Randevular",
+    icon: CalendarDays,
+  },
+  {
     href: "/admin/alistirmalar",
     label: "Alıştırmalar",
     icon: BookOpen,
@@ -43,6 +51,21 @@ const sidebarLinks = [
     href: "/admin/seviye-tespit",
     label: "Seviye Tespit",
     icon: ClipboardCheck,
+  },
+  {
+    href: "/admin/blog",
+    label: "Blog",
+    icon: BookOpen,
+  },
+  {
+    href: "/admin/topluluk",
+    label: "Topluluk",
+    icon: MessageCircle,
+  },
+  {
+    href: "/admin/yorumlar",
+    label: "Yorumlar",
+    icon: MessageSquare,
   },
 ];
 
