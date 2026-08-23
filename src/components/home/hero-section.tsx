@@ -41,7 +41,7 @@ export default function HeroSection() {
 
             <div className="text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0 leading-relaxed space-y-4">
               <p className="font-semibold text-foreground">Welcome to English with Inayet</p>
-              <p>My name is Inayet. I created this channel to help people learn English — even if they know nothing at all.</p>
+              <p>My name is Inayet. even if they know nothing at all.</p>
               <p>If you feel scared or confused about English, do not worry. You are not alone. I will guide you step by step, from zero to advanced.</p>
             </div>
 
@@ -96,11 +96,11 @@ export default function HeroSection() {
             <div className="relative">
               {/* Main card */}
               <div className="w-80 h-96 lg:w-96 lg:h-[440px] rounded-3xl shadow-2xl shadow-primary/20 flex items-center justify-center overflow-hidden relative">
-                <Image 
-                  src="/hero-image.jpg" 
-                  alt="English with İnayet" 
-                  fill 
-                  className="object-cover" 
+                <Image
+                  src="/hero-image.jpg"
+                  alt="English with İnayet"
+                  fill
+                  className="object-cover"
                   priority
                 />
               </div>

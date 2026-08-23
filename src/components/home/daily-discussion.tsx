@@ -12,6 +12,7 @@ import {
   LogIn,
   User,
   Clock,
+  CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { DailyDiscussion, DiscussionReply } from "@/types";
@@ -165,39 +166,55 @@ export default function DailyDiscussionSection() {
 
         {/* Reply Input */}
         {user ? (
-          <Card className="border-0 shadow-md shadow-black/5 mb-6">
-            <CardContent className="p-5">
-              <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-full gradient-primary flex items-center justify-center text-white text-sm font-bold shrink-0 mt-1">
-                  {user.name.charAt(0).toUpperCase()}
+          replies.some(r => r.user_id === user.id) ? (
+            <Card className="border-0 shadow-md shadow-black/5 mb-6 border-dashed bg-green-50/50">
+              <CardContent className="p-6 text-center">
+                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-3">
+                  <CheckCircle2 className="w-6 h-6 text-green-600" />
                 </div>
-                <div className="flex-1 space-y-3">
-                  <Textarea
-                    value={replyText}
-                    onChange={(e) => setReplyText(e.target.value)}
-                    placeholder="Write your answer in English..."
-                    rows={3}
-                    className="resize-none"
-                  />
-                  <div className="flex justify-end">
-                    <Button
-                      size="sm"
-                      disabled={isSubmitting || !replyText.trim()}
-                      onClick={handleSubmitReply}
-                      className="gap-2 gradient-primary border-0 text-white hover:opacity-90"
-                    >
-                      {isSubmitting ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Send className="w-4 h-4" />
-                      )}
-                      Gönder
-                    </Button>
+                <h3 className="text-lg font-semibold text-green-800 mb-1">
+                  Harika İş Çıkardınız!
+                </h3>
+                <p className="text-sm text-green-700/80">
+                  Bu günün sorusuna zaten yanıt verdiniz. Katılımınız için teşekkürler.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="border-0 shadow-md shadow-black/5 mb-6">
+              <CardContent className="p-5">
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-full gradient-primary flex items-center justify-center text-white text-sm font-bold shrink-0 mt-1">
+                    {user.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1 space-y-3">
+                    <Textarea
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      placeholder="Write your answer in English..."
+                      rows={3}
+                      className="resize-none"
+                    />
+                    <div className="flex justify-end">
+                      <Button
+                        size="sm"
+                        disabled={isSubmitting || !replyText.trim()}
+                        onClick={handleSubmitReply}
+                        className="gap-2 gradient-primary border-0 text-white hover:opacity-90"
+                      >
+                        {isSubmitting ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Send className="w-4 h-4" />
+                        )}
+                        Gönder
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )
         ) : (
           <Card className="border-0 shadow-md shadow-black/5 mb-6 border-dashed">
             <CardContent className="p-5 text-center">

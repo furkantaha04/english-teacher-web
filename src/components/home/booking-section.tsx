@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,8 +20,10 @@ import {
   Loader2,
   CheckCircle2,
   BookOpen,
+  LogIn,
 } from "lucide-react";
 import { toast } from "sonner";
+import Link from "next/link";
 
 const lessonTypes = [
   { value: "ydt", label: "YDT Hazırlık" },
@@ -46,6 +48,26 @@ export default function BookingSection() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [user, setUser] = useState<{ id: string } | null>(null);
+  const [loadingAuth, setLoadingAuth] = useState(true);
+
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          setUser({ id: session.user.id });
+        }
+      } catch (error) {
+        console.error("Auth check error:", error);
+      } finally {
+        setLoadingAuth(false);
+      }
+    }
+    checkAuth();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -65,7 +87,32 @@ export default function BookingSection() {
       const { createClient } = await import("@/lib/supabase/client");
       const supabase = createClient();
 
+      if (!user) {
+        toast.error("Randevu almak için giriş yapmalısınız.");
+        return;
+      }
+
+      // Check 1 week rule
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+      
+      const { data: recentBookings, error: checkError } = await supabase
+        .from("lesson_bookings")
+        .select("id")
+        .eq("user_id", user.id)
+        .in("status", ["pending", "approved"])
+        .gte("created_at", oneWeekAgo.toISOString());
+
+      if (checkError) throw checkError;
+
+      if (recentBookings && recentBookings.length > 0) {
+        toast.error("Haftada yalnızca bir randevu talebinde bulunabilirsiniz.");
+        setIsSubmitting(false);
+        return;
+      }
+
       const { error } = await supabase.from("lesson_bookings").insert({
+        user_id: user.id,
         name: formData.name,
         email: formData.email,
         phone: formData.phone || null,
@@ -142,9 +189,34 @@ export default function BookingSection() {
           </p>
         </div>
 
-        <Card className="border-0 shadow-lg shadow-primary/5">
-          <CardContent className="p-6 sm:p-8">
-            <form onSubmit={handleSubmit} className="space-y-5">
+        {loadingAuth ? (
+          <Card className="border-0 shadow-lg shadow-primary/5">
+            <CardContent className="p-12 text-center flex items-center justify-center">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </CardContent>
+          </Card>
+        ) : !user ? (
+          <Card className="border-0 shadow-lg shadow-primary/5 border-dashed">
+            <CardContent className="p-12 text-center">
+              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                <LogIn className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Giriş Yapmanız Gerekiyor</h3>
+              <p className="text-muted-foreground mb-6">
+                Özel ders randevusu oluşturmak için lütfen giriş yapın.
+              </p>
+              <Link href="/giris">
+                <Button size="lg" className="gap-2">
+                  <LogIn className="w-4 h-4" />
+                  Giriş Yap
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="border-0 shadow-lg shadow-primary/5">
+            <CardContent className="p-6 sm:p-8">
+              <form onSubmit={handleSubmit} className="space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="booking-name">Ad Soyad *</Label>
@@ -264,6 +336,7 @@ export default function BookingSection() {
             </form>
           </CardContent>
         </Card>
+        )}
       </div>
     </section>
   );

@@ -370,13 +370,18 @@ export default function SeviyeTestiPage() {
 
   const handleDownloadCertificate = async () => {
     const el = document.getElementById("certificate-card");
-    if (!el) return;
+    if (!el) {
+      toast.error("Sertifika elementi henüz hazır değil.");
+      return;
+    }
     try {
       const html2canvas = (await import("html2canvas")).default;
       const canvas = await html2canvas(el, {
         scale: 2,
         backgroundColor: null,
         useCORS: true,
+        logging: false,
+        allowTaint: true,
       });
       const link = document.createElement("a");
       link.download = `English_with_Inayet_Sertifika_${contactInfo.name.replace(/\s+/g, "_")}.png`;

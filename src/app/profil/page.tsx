@@ -29,6 +29,8 @@ import {
   Loader2,
   BookMarked,
   GraduationCap,
+  CalendarDays,
+  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { QuizResult, UserSavedWord, Profile } from "@/types";
@@ -39,6 +41,7 @@ export default function ProfilPage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [quizResults, setQuizResults] = useState<QuizResult[]>([]);
   const [savedWords, setSavedWords] = useState<UserSavedWord[]>([]);
+  const [bookings, setBookings] = useState<any[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -59,8 +62,8 @@ export default function ProfilPage() {
         const currentUser = session.user;
         setUserId(currentUser.id);
 
-        // Fetch profile, quiz results, saved words in parallel
-        const [profileRes, quizRes, wordsRes] = await Promise.all([
+        // Fetch profile, quiz results, saved words, and bookings in parallel
+        const [profileRes, quizRes, wordsRes, bookingsRes] = await Promise.all([
           supabase
             .from("profiles")
             .select("*")
@@ -73,6 +76,11 @@ export default function ProfilPage() {
             .order("created_at", { ascending: false }),
           supabase
             .from("user_saved_words")
+            .select("*")
+            .eq("user_id", currentUser.id)
+            .order("created_at", { ascending: false }),
+          supabase
+            .from("lesson_bookings")
             .select("*")
             .eq("user_id", currentUser.id)
             .order("created_at", { ascending: false }),
@@ -94,6 +102,7 @@ export default function ProfilPage() {
 
         if (quizRes.data) setQuizResults(quizRes.data);
         if (wordsRes.data) setSavedWords(wordsRes.data);
+        if (bookingsRes.data) setBookings(bookingsRes.data);
       } catch (error) {
         console.error("Failed to load profile:", error);
         toast.error("Profil yüklenirken hata oluştu");
@@ -220,7 +229,7 @@ export default function ProfilPage() {
 
         {/* Tabs */}
         <Tabs defaultValue="quiz-history" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="quiz-history" className="gap-2">
               <Trophy className="w-4 h-4" />
               <span className="hidden sm:inline">Sınav Geçmişim &</span> İlerleme
@@ -228,6 +237,10 @@ export default function ProfilPage() {
             <TabsTrigger value="word-book" className="gap-2">
               <BookMarked className="w-4 h-4" />
               Kelime Defterim
+            </TabsTrigger>
+            <TabsTrigger value="bookings" className="gap-2">
+              <CalendarDays className="w-4 h-4" />
+              Randevularım
             </TabsTrigger>
           </TabsList>
 
@@ -467,6 +480,78 @@ export default function ProfilPage() {
                     Ana sayfadaki günün kelimesinde kalp ikonuna tıklayarak
                     kelimeleri kaydedin.
                   </p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          {/* Tab 3: Bookings */}
+          <TabsContent value="bookings" className="space-y-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <CalendarDays className="w-5 h-5 text-primary" />
+                Özel Ders Randevularım
+              </h3>
+            </div>
+
+            {bookings.length > 0 ? (
+              <div className="space-y-4">
+                {bookings.map((booking) => (
+                  <Card key={booking.id} className="border-0 shadow-md shadow-black/5">
+                    <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge variant="secondary" className="font-medium">
+                            {booking.lesson_type === "ydt" ? "YDT Hazırlık" : 
+                             booking.lesson_type === "yds" ? "YDS Hazırlık" : 
+                             booking.lesson_type === "genel" ? "Genel İngilizce" : 
+                             booking.lesson_type === "speaking" ? "Speaking & Conversation" : 
+                             booking.lesson_type === "akademik" ? "Akademik İngilizce" : booking.lesson_type}
+                          </Badge>
+                          <Badge 
+                            variant="outline" 
+                            className={
+                              booking.status === "approved" ? "border-green-500 text-green-600 bg-green-50" : 
+                              booking.status === "rejected" ? "border-red-500 text-red-600 bg-red-50" : 
+                              "border-amber-500 text-amber-600 bg-amber-50"
+                            }
+                          >
+                            {booking.status === "approved" ? "Onaylandı" : 
+                             booking.status === "rejected" ? "Reddedildi" : 
+                             "Beklemede"}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
+                          <span className="flex items-center gap-1.5">
+                            <CalendarDays className="w-4 h-4" />
+                            {formatDate(booking.date)}
+                          </span>
+                          <span className="flex items-center gap-1.5">
+                            <Clock className="w-4 h-4" />
+                            {booking.time}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-xs text-muted-foreground sm:text-right">
+                        Talep: {formatDate(booking.created_at)}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Card className="border-0 shadow-md shadow-black/5">
+                <CardContent className="p-12 text-center">
+                  <CalendarDays className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-muted-foreground mb-1">
+                    Henüz randevunuz bulunmuyor
+                  </h3>
+                  <p className="text-sm text-muted-foreground/60 max-w-sm mx-auto mb-4">
+                    Özel ders almak için randevu oluşturabilirsiniz.
+                  </p>
+                  <Button variant="outline" size="sm" onClick={() => router.push("/#randevu-al")}>
+                    Randevu Oluştur
+                  </Button>
                 </CardContent>
               </Card>
             )}
