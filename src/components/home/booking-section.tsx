@@ -140,7 +140,7 @@ export default function BookingSection() {
 
   if (isSubmitted) {
     return (
-      <section className="section-padding">
+      <section id="randevu" className="section-padding">
         <div className="container-main max-w-2xl">
           <Card className="border-0 shadow-lg shadow-primary/5">
             <CardContent className="p-12 text-center">
@@ -174,7 +174,7 @@ export default function BookingSection() {
   const minDate = tomorrow.toISOString().split("T")[0];
 
   return (
-    <section className="section-padding bg-muted/30">
+    <section id="randevu" className="section-padding bg-muted/30">
       <div className="container-main max-w-2xl">
         <div className="text-center mb-10">
           <Badge variant="secondary" className="mb-3 px-3 py-1">

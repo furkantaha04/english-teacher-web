@@ -9,6 +9,7 @@ import {
   ArrowRight,
   Sparkles,
   Star,
+  CalendarDays,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -86,6 +87,16 @@ export default function HeroSection() {
                 >
                   <BookOpen className="w-4 h-4" />
                   Seviyeni Test Et
+                </Button>
+              </Link>
+              <Link href="#randevu">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="gap-2 px-6 text-base"
+                >
+                  <CalendarDays className="w-4 h-4" />
+                  Randevu Oluştur
                 </Button>
               </Link>
             </div>
