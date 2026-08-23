@@ -30,8 +30,8 @@ export default function Footer() {
               </div>
             </Link>
             <p className="text-sm text-background/60 leading-relaxed mt-3">
-              Profesyonel İngilizce eğitimi ile hedeflerinize ulaşın. 
-              Kişiselleştirilmiş ders planları ve uzman rehberliği ile 
+              Profesyonel İngilizce eğitimi ile hedeflerinize ulaşın.
+              Kişiselleştirilmiş ders planları ve uzman rehberliği ile
               İngilizce öğrenmek artık çok kolay.
             </p>
           </div>
@@ -102,7 +102,7 @@ export default function Footer() {
               <li className="flex items-start gap-2.5">
                 <Phone className="w-4 h-4 mt-0.5 text-primary" />
                 <span className="text-sm text-background/60">
-                  +90 (5XX) XXX XX XX
+                  +90 (546) 489 36 33
                 </span>
               </li>
               <li className="flex items-start gap-2.5">
@@ -118,7 +118,7 @@ export default function Footer() {
         <Separator className="my-8 bg-background/10" />
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-background/40">
-          <p>© {new Date().getFullYear()} English with İnayet. Tüm hakları saklıdır.</p>
+          <p>© {new Date().getFullYear()} Powered by Furkan Taha Timur. Tüm hakları saklıdır.</p>
           <p>Profesyonel İngilizce Eğitimi</p>
         </div>
       </div>
