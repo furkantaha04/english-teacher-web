@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { GraduationCap, UserPlus, Loader2, AlertCircle } from "lucide-react";
+import { GraduationCap, UserPlus, Loader2, AlertCircle, CheckCircle2, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { registerSchema } from "@/lib/validations";
@@ -20,9 +20,32 @@ export default function KayitOlPage() {
   const [registerError, setRegisterError] = useState("");
   const [isRegisterLoading, setIsRegisterLoading] = useState(false);
 
+  const [criteria, setCriteria] = useState({
+    length: false,
+    uppercase: false,
+    number: false,
+    special: false
+  });
+
+  useEffect(() => {
+    setCriteria({
+      length: registerPassword.length >= 8,
+      uppercase: /[A-Z]/.test(registerPassword),
+      number: /[0-9]/.test(registerPassword),
+      special: /[!@#$%^&*(),.?":{}|<>]/.test(registerPassword)
+    });
+  }, [registerPassword]);
+
+  const strength = Object.values(criteria).filter(Boolean).length;
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setRegisterError("");
+
+    if (strength < 4) {
+      setRegisterError("Lütfen tüm şifre kurallarını eksiksiz sağlayın.");
+      return;
+    }
 
     const validation = registerSchema.safeParse({ 
       email: registerEmail, 
@@ -110,9 +133,50 @@ export default function KayitOlPage() {
                   type="password"
                   value={registerPassword}
                   onChange={(e) => setRegisterPassword(e.target.value)}
-                  placeholder="En az 6 karakter"
+                  placeholder="En az 8 karakter"
                   required
                 />
+                
+                {registerPassword.length > 0 && (
+                  <div className="space-y-3 mt-3 pt-2">
+                    <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full transition-all duration-300 ${
+                          strength < 3 ? "bg-red-500 w-1/3" : 
+                          strength === 3 ? "bg-amber-500 w-2/3" : 
+                          "bg-green-500 w-full"
+                        }`}
+                      />
+                    </div>
+                    
+                    <p className={`text-xs font-medium ${
+                      strength < 3 ? "text-red-500" : 
+                      strength === 3 ? "text-amber-500" : 
+                      "text-green-500"
+                    }`}>
+                      {strength < 3 ? "Şifre zayıf" : strength === 3 ? "Şifre orta seviyede" : "Şifre güçlü ve geçerli"}
+                    </p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                      <div className="flex items-center gap-1.5">
+                        {criteria.length ? <CheckCircle2 className="w-3.5 h-3.5 text-green-500" /> : <XCircle className="w-3.5 h-3.5 text-muted-foreground/50" />}
+                        <span className={`text-xs ${criteria.length ? "text-foreground" : "text-muted-foreground"}`}>En az 8 karakter</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {criteria.uppercase ? <CheckCircle2 className="w-3.5 h-3.5 text-green-500" /> : <XCircle className="w-3.5 h-3.5 text-muted-foreground/50" />}
+                        <span className={`text-xs ${criteria.uppercase ? "text-foreground" : "text-muted-foreground"}`}>En az 1 büyük harf</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {criteria.number ? <CheckCircle2 className="w-3.5 h-3.5 text-green-500" /> : <XCircle className="w-3.5 h-3.5 text-muted-foreground/50" />}
+                        <span className={`text-xs ${criteria.number ? "text-foreground" : "text-muted-foreground"}`}>En az 1 rakam</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {criteria.special ? <CheckCircle2 className="w-3.5 h-3.5 text-green-500" /> : <XCircle className="w-3.5 h-3.5 text-muted-foreground/50" />}
+                        <span className={`text-xs ${criteria.special ? "text-foreground" : "text-muted-foreground"}`}>En az 1 özel işaret</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
               
               <div className="space-y-2">
@@ -130,7 +194,7 @@ export default function KayitOlPage() {
               <Button
                 type="submit"
                 size="lg"
-                disabled={isRegisterLoading}
+                disabled={isRegisterLoading || (registerPassword.length > 0 && strength < 4)}
                 className="w-full gap-2 gradient-warm border-0 text-white hover:opacity-90"
               >
                 {isRegisterLoading ? (
