@@ -158,6 +158,23 @@ export default function AdminToplulukPage() {
     }
   };
 
+  const handleDeleteReply = async (replyId: string) => {
+    if (!confirm("Bu yanıtı silmek istediğinize emin misiniz?")) return;
+
+    try {
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+      const { error } = await supabase.from("discussion_replies").delete().eq("id", replyId);
+
+      if (error) throw error;
+      toast.success("Yanıt silindi.");
+      setSelectedReplies((prev) => prev.filter((r) => r.id !== replyId));
+    } catch (error) {
+      console.error("Delete reply error:", error);
+      toast.error("Yanıt silinemedi.");
+    }
+  };
+
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("tr-TR", {
       day: "2-digit",
@@ -320,12 +337,12 @@ export default function AdminToplulukPage() {
               {selectedReplies.map((reply) => (
                 <div
                   key={reply.id}
-                  className="flex items-start gap-3 p-3 rounded-lg bg-muted/50"
+                  className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 relative group"
                 >
                   <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary shrink-0">
                     {reply.user_name.charAt(0).toUpperCase()}
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 pr-8">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-sm font-medium">{reply.user_name}</span>
                       <span className="text-xs text-muted-foreground flex items-center gap-1">
@@ -335,6 +352,15 @@ export default function AdminToplulukPage() {
                     </div>
                     <p className="text-sm">{reply.reply_text}</p>
                   </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={() => handleDeleteReply(reply.id)}
+                    title="Yanıtı Sil"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
               ))}
             </div>

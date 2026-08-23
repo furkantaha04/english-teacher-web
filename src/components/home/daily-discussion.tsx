@@ -18,6 +18,17 @@ import { toast } from "sonner";
 import type { DailyDiscussion, DiscussionReply } from "@/types";
 import Link from "next/link";
 
+const BAD_WORDS = [
+  "amk", "aq", "siktir", "orospu", "piç", "yarrak",
+  "fuck", "shit", "bitch", "asshole", "cunt", "pussy",
+  "amına", "amina", "amcik", "amcık", "ibne", "kaltak"
+];
+
+const containsBadWords = (text: string) => {
+  const lowerText = text.toLowerCase();
+  return BAD_WORDS.some(word => lowerText.includes(word));
+};
+
 export default function DailyDiscussionSection() {
   const [discussion, setDiscussion] = useState<DailyDiscussion | null>(null);
   const [replies, setReplies] = useState<DiscussionReply[]>([]);
@@ -80,6 +91,10 @@ export default function DailyDiscussionSection() {
   const handleSubmitReply = async () => {
     if (!replyText.trim()) {
       toast.error("Lütfen bir cevap yazın.");
+      return;
+    }
+    if (containsBadWords(replyText)) {
+      toast.error("Yorumunuz topluluk kurallarına uygun olmayan ifadeler içeriyor. Lütfen saygılı bir dil kullanın.");
       return;
     }
     if (!user || !discussion) return;
