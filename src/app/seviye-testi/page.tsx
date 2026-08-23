@@ -369,27 +369,27 @@ export default function SeviyeTestiPage() {
   };
 
   const handleDownloadCertificate = async () => {
-    const el = document.getElementById("certificate-card");
-    if (!el) {
-      toast.error("Sertifika elementi henüz hazır değil.");
+    const node = document.getElementById("certificate-node");
+    if (!node) {
+      toast.error("Sertifika alanı bulunamadı");
       return;
     }
+
     try {
-      const html2canvas = (await import("html2canvas")).default;
-      const canvas = await html2canvas(el, {
-        scale: 2,
-        backgroundColor: null,
-        useCORS: true,
-        logging: false,
-        allowTaint: true,
+      const htmlToImage = await import("html-to-image");
+      const dataUrl = await htmlToImage.toPng(node, {
+        quality: 0.95,
+        pixelRatio: 2,
+        cacheBust: true,
       });
       const link = document.createElement("a");
       link.download = `English_with_Inayet_Sertifika_${contactInfo.name.replace(/\s+/g, "_")}.png`;
-      link.href = canvas.toDataURL("image/png");
+      link.href = dataUrl;
       link.click();
+      toast.success("Sertifikanız başarıyla indirildi!");
     } catch (error) {
-      console.error("Certificate download error:", error);
-      toast.error("Sertifika indirilemedi.");
+      console.error("Sertifika hatası:", error);
+      toast.error("Sertifika oluşturulurken bir hata oluştu");
     }
   };
 
@@ -451,10 +451,10 @@ export default function SeviyeTestiPage() {
 
             {/* Certificate Card */}
             <div
-              id="certificate-card"
+              id="certificate-node"
               className="relative rounded-2xl overflow-hidden mb-6 text-white"
               style={{
-                background: "linear-gradient(135deg, oklch(0.55 0.2 260), oklch(0.40 0.22 280))",
+                background: "linear-gradient(135deg, #3b82f6, #1e3a8a)",
                 padding: "2rem",
               }}
             >
